@@ -7,10 +7,17 @@ library
   build-depends:
       base
     , linear
+    , named
+    , safe-exceptions
     , sdl2
+    , text
+  default-extensions:
+    NoImplicitPrelude
   default-language:
     Haskell2010
   exposed-modules:
     Gam
+    Gam.V
+    Gam.Window
   ghc-options:
     -Wall
