@@ -2,5 +2,4 @@ module Gam.V
   ( V(..)
   ) where
 
-data V a
-  = V a a
+import Gam.Internal.V

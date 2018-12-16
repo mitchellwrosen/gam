@@ -1,0 +1,58 @@
+cabal-version: 2.4
+
+name: gam-internal
+version: 0
+
+library
+  build-depends:
+      base
+    , generic-lens
+    , lens
+    , linear
+    , mtl
+    , safe-exceptions
+    , sdl2
+    , StateVar
+    , text
+  default-extensions:
+    ConstraintKinds
+    DataKinds
+    DefaultSignatures
+    DeriveAnyClass
+    DeriveFunctor
+    DeriveGeneric
+    DerivingStrategies
+    ExistentialQuantification
+    FlexibleContexts
+    FlexibleInstances
+    GADTs
+    GeneralizedNewtypeDeriving
+    InstanceSigs
+    KindSignatures
+    LambdaCase
+    MagicHash
+    MultiParamTypeClasses
+    NoImplicitPrelude
+    OverloadedLabels
+    OverloadedStrings
+    PatternSynonyms
+    RankNTypes
+    ScopedTypeVariables
+    StandaloneDeriving
+    StrictData
+    TupleSections
+    TypeApplications
+    TypeFamilies
+    TypeOperators
+    UnicodeSyntax
+    ViewPatterns
+  default-language:
+    Haskell2010
+  exposed-modules:
+    Gam.Internal.Prelude
+    Gam.Internal.Render
+    Gam.Internal.V
+    Gam.Internal.Window
+  ghc-options:
+    -Wall
+    -fno-warn-name-shadowing
