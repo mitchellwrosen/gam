@@ -1,0 +1,16 @@
+cabal-version: 2.4
+
+name: gam
+version: 0
+
+library
+  build-depends:
+      base
+    , linear
+    , sdl2
+  default-language:
+    Haskell2010
+  exposed-modules:
+    Gam
+  ghc-options:
+    -Wall
