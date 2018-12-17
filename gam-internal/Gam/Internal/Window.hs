@@ -1,20 +1,22 @@
 module Gam.Internal.Window where
 
+import Gam.Internal.Picture (Picture)
 import Gam.Internal.Prelude
 import Gam.Internal.Render
-import Gam.Internal.RGBA (RGBA)
-import Gam.Internal.V (V(..))
+import Gam.Internal.RGBA    (RGBA)
+import Gam.Internal.V       (V(..))
 
-import qualified Gam.Internal.V as V
 import qualified Gam.Internal.RGBA as RGBA
+import qualified Gam.Internal.V    as V
 
 import qualified SDL
 
 data Window
   = Window
-  { title :: Text
-  , size :: V
+  { title      :: Text
+  , size       :: V
   , background :: RGBA
+  , picture    :: Picture
   } deriving stock (Generic)
 
 new :: MonadIO m => Window -> m SDL.Window
