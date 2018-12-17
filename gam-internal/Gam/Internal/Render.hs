@@ -16,5 +16,5 @@ newtype Render a
   deriving newtype (Applicative, Functor, Monad, MonadIO, MonadReader Env)
 
 run :: SDL.Window -> SDL.Renderer -> Render a -> IO a
-run window renderer (Render m) =
+run window renderer (Render m) = do
   runReaderT m (Env window renderer)

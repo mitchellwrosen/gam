@@ -11,5 +11,6 @@ import Data.Generics.Product.Any as X (the)
 import Data.IORef                as X
 import Data.StateVar             as X (($=!))
 import Data.Text                 as X (Text)
+import Data.Word                 as X
 import GHC.Generics              as X (Generic)
 import Prelude                   as X

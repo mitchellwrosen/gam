@@ -1,5 +1,6 @@
 module Gam.V
-  ( V(..)
+  ( V
+  , pattern V
   ) where
 
 import Gam.Internal.V

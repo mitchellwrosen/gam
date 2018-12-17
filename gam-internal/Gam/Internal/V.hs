@@ -1,15 +1,17 @@
 module Gam.Internal.V where
 
+import Gam.Internal.Prelude
 
-import qualified Linear
+import Linear (V2(..))
 
-data V a
-  = V a a
 
-fromV2 :: Linear.V2 a -> V a
-fromV2 (Linear.V2 x y) =
-  V x y
+newtype V
+  = V_ (V2 Float)
 
-toV2 :: V a -> Linear.V2 a
-toV2 (V x y) =
-  Linear.V2 x y
+pattern V :: Float -> Float -> V
+pattern V x y =
+  V_ (V2 x y)
+
+toV2 :: V -> V2 Float
+toV2 (V_ v) =
+  v

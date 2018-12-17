@@ -32,6 +32,7 @@ library
     LambdaCase
     MagicHash
     MultiParamTypeClasses
+    NamedFieldPuns
     NoImplicitPrelude
     OverloadedLabels
     OverloadedStrings
@@ -51,6 +52,7 @@ library
   exposed-modules:
     Gam.Internal.Prelude
     Gam.Internal.Render
+    Gam.Internal.RGBA
     Gam.Internal.V
     Gam.Internal.Window
   ghc-options:
