@@ -2,6 +2,7 @@ module Gam.Main.Tea where
 
 import Gam.Internal.Prelude
 import Gam.Internal.Window  (Window)
+import Internal.Sub         (Sub(..))
 
 import qualified Gam.Internal.Render as Render
 import qualified Gam.Internal.Window as Window
@@ -12,17 +13,14 @@ import GHC.Clock
 import qualified SDL
 
 
-type Event
-  = SDL.EventPayload
-
 main ::
      state
-  -> (Int -> state -> state)
-  -> (Event -> state -> state)
+  -> Sub msg
+  -> (msg -> state -> state)
   -> (state -> Window)
   -> IO ()
-main state step handle render = do
-  SDL.initialize [SDL.InitVideo]
+main state (Sub subFps subSdl sdlInits) update render = do
+  SDL.initialize (SDL.InitVideo : sdlInits)
 
   window <-
     Window.new (render state)
@@ -33,24 +31,63 @@ main state step handle render = do
       , SDL.rendererTargetTexture = False
       }
 
-  now <- monotonicMicros
-
   loop
-    step
-    handle
+    subFps
+    subSdl
+    update
     (Render.run window renderer . Window.render . render)
-    now
     state
 
 loop
-  :: forall state.
-     (Int -> state -> state)
-  -> (Event -> state -> state)
+  :: forall msg state.
+     Maybe (Int -> msg)
+  -> Maybe (SDL.EventPayload -> Maybe msg)
+  -> (msg -> state -> state)
+  -> (state -> IO ())
+  -> state
+  -> IO ()
+loop subFps subSdl update render state =
+  case subFps of
+    Nothing ->
+      loopWithoutFps subSdl' update render state
+
+    Just subFps' -> do
+      now <- monotonicMicros
+      loopWithFps subFps' subSdl' update render now state
+
+  where
+    subSdl' :: SDL.EventPayload -> Maybe msg
+    subSdl' =
+      fromMaybe (const Nothing) subSdl
+
+loopWithoutFps ::
+     forall msg state.
+     (SDL.EventPayload -> Maybe msg)
+  -> (msg -> state -> state)
+  -> (state -> IO ())
+  -> state
+  -> IO ()
+loopWithoutFps subSdl update render =
+  go
+  where
+    go :: state -> IO ()
+    go state = do
+      render state
+      event <- SDL.waitEvent
+      case subSdl (SDL.eventPayload event) of
+        Nothing -> go state
+        Just msg -> go (update msg state)
+
+loopWithFps ::
+     forall msg state.
+     (Int -> msg)
+  -> (SDL.EventPayload -> Maybe msg)
+  -> (msg -> state -> state)
   -> (state -> IO ())
   -> Int
   -> state
   -> IO ()
-loop step handle render =
+loopWithFps subFps subSdl update render =
   go
   where
     go :: Int -> state -> IO ()
@@ -60,11 +97,19 @@ loop step handle render =
       let
         handleAll state =
           SDL.pollEvent >>= \case
-            Nothing -> pure state
-            Just event -> handleAll (handle (SDL.eventPayload event) state)
+            Nothing ->
+              pure state
+
+            Just event ->
+              case subSdl (SDL.eventPayload event) of
+                Nothing ->
+                  handleAll state
+
+                Just msg ->
+                  handleAll (update msg state)
 
       state1 <-
-        step (time0 - prev) <$> handleAll state0
+        update (subFps (time0 - prev)) <$> handleAll state0
 
       render state1
 
@@ -73,6 +118,7 @@ loop step handle render =
       threadDelay (time0 + microsPerFrame - time1)
 
       go time0 state1
+
 
 monotonicMicros :: IO Int
 monotonicMicros = do

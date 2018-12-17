@@ -45,5 +45,8 @@ library
     Haskell2010
   exposed-modules:
     Gam.Main.Tea
+    Gam.Main.Tea.Sub
   ghc-options:
     -Wall
+  other-modules:
+    Internal.Sub
