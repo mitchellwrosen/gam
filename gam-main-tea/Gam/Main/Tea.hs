@@ -14,6 +14,7 @@ import GHC.Clock
 import System.Mem         (performGC)
 
 import qualified SDL
+import qualified SDL.Font
 
 
 main ::
@@ -24,6 +25,7 @@ main ::
   -> IO ()
 main state (Sub subFps subSdl sdlInits) update render = do
   SDL.initialize (SDL.InitVideo : sdlInits)
+  SDL.Font.initialize
 
   window <-
     Window.new (render state)
