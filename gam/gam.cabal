@@ -6,8 +6,9 @@ version: 0
 library
   build-depends:
       base
-    -- , gam-internal
+    , gam-internal
   default-extensions:
+    BangPatterns
     ConstraintKinds
     DataKinds
     DefaultSignatures

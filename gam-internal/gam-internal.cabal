@@ -19,6 +19,7 @@ library
     , text
     , unordered-containers
   default-extensions:
+    BangPatterns
     ConstraintKinds
     DataKinds
     DefaultSignatures

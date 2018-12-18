@@ -19,6 +19,7 @@ steps:
 columns: 80
 newline: native
 language_extensions:
+  - BangPatterns
   - ConstraintKinds
   - DataKinds
   - DefaultSignatures

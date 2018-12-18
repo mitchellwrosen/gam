@@ -9,6 +9,7 @@ library
     , gam-internal
     , sdl2
   default-extensions:
+    BangPatterns
     ConstraintKinds
     DataKinds
     DefaultSignatures

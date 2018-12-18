@@ -21,6 +21,8 @@ data Picture
   | Sprite SpriteSheet Int
   | Translate V Picture
   | Rotate Float Picture
+  | FlipX Picture
+  | FlipY Picture
   | Append Picture Picture
 
 instance Monoid Picture where
@@ -62,25 +64,31 @@ rotate n = \case
 
 render :: SDL.Renderer -> TextureCache -> Picture -> IO ()
 render renderer textureCache =
-  go 0 0
+  go 0 0 False False
   where
-    go :: P -> Float -> Picture -> IO ()
-    go point degrees = \case
+    go :: P -> Float -> Bool -> Bool -> Picture -> IO ()
+    go !point !degrees !flipX !flipY = \case
       Empty ->
         pure ()
 
       Sprite sheet which ->
-        renderSprite renderer textureCache sheet which point degrees
+        renderSprite renderer textureCache sheet which point degrees flipX flipY
 
       Translate v pic ->
-        go (P.add v point) degrees pic
+        go (P.add v point) degrees flipX flipY pic
 
       Rotate n pic ->
-        go point (n + degrees) pic
+        go point (n + degrees) flipX flipY pic
+
+      FlipX pic ->
+        go point degrees (not flipX) flipY pic
+
+      FlipY pic ->
+        go point degrees flipX (not flipY) pic
 
       Append pic1 pic2 -> do
-        go point degrees pic1
-        go point degrees pic2
+        go point degrees flipX flipY pic1
+        go point degrees flipX flipY pic2
 
 renderSprite ::
      SDL.Renderer
@@ -89,8 +97,10 @@ renderSprite ::
   -> Int
   -> P
   -> Float
+  -> Bool
+  -> Bool
   -> IO ()
-renderSprite renderer textureCache sheet which point degrees = do
+renderSprite renderer textureCache sheet which point degrees flipX flipY = do
   texture <-
     TextureCache.load
       textureCache
@@ -114,6 +124,8 @@ renderSprite renderer textureCache sheet which point degrees = do
     srcRect
     dstRect
     (realToFrac degrees)
+    flipX
+    flipY
     texture
 
   where
@@ -129,4 +141,3 @@ renderSprite renderer textureCache sheet which point degrees = do
       SDL.Rectangle
         (round <$> P.unwrap point)
         spriteV2
-

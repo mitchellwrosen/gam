@@ -47,9 +47,11 @@ render ::
   -> SDL.Rectangle CInt
   -> SDL.Rectangle CInt
   -> CDouble
+  -> Bool
+  -> Bool
   -> Texture
   -> IO ()
-render renderer src dst degrees (Texture _ texture) =
+render renderer src dst degrees flipX flipY (Texture _ texture) =
   SDL.copyEx
     renderer
     texture
@@ -57,4 +59,4 @@ render renderer src dst degrees (Texture _ texture) =
     (Just dst)
     degrees
     Nothing
-    (Linear.V2 False False)
+    (Linear.V2 flipX flipY)
