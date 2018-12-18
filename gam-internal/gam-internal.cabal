@@ -58,6 +58,7 @@ library
     Haskell2010
   exposed-modules:
     Gam.Internal.FontCache
+    Gam.Internal.Music
     Gam.Internal.P
     Gam.Internal.Picture
     Gam.Internal.Prelude

@@ -8,6 +8,7 @@ library
       base
     , gam-internal
     , sdl2
+    , sdl2-mixer
     , sdl2-ttf
   default-extensions:
     BangPatterns
