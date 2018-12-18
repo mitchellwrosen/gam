@@ -7,4 +7,6 @@ data Music
   = Music
   { file :: FilePath
   , volume :: Int
+  , fadeIn :: Int -- ^ Milliseconds.
+  , fadeOut :: Int -- ^ Milliseconds.
   }

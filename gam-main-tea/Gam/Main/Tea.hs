@@ -1,6 +1,6 @@
 module Gam.Main.Tea where
 
-import Gam.Internal.Music   (Music(Music))
+import Gam.Internal.Music   (Music)
 import Gam.Internal.Prelude
 import Gam.Internal.Window  (Window)
 import Internal.Sub         (Sub(..))
@@ -111,8 +111,13 @@ mainLoop subs update render =
       go newPlayingMusic time0 state2
 
 -- Mini music state machine.
+--
+-- When we are fading out music, it doesn't matter what the current state says
+-- what the music should be. We check every frame to see if the music has faded
+-- out, then switch to the 'NotPlaying' music state.
 data PlayingMusic
   = NotPlayingMusic
+  | FadingOutMusic SDL.Mixer.Music
   | PlayingMusic Music SDL.Mixer.Music
 
 adjustMusic ::
@@ -130,11 +135,33 @@ adjustMusic oldPlayingMusic newMusicSettings =
           music <- play settings
           pure (PlayingMusic settings music)
 
+    FadingOutMusic music ->
+      SDL.Mixer.playingMusic >>= \case
+        False -> do
+          SDL.Mixer.free music
+          pure NotPlayingMusic
+
+        True ->
+          pure (FadingOutMusic music)
+
     PlayingMusic oldSettings oldMusic ->
       case newMusicSettings of
         Nothing -> do
-          stop oldMusic
-          pure NotPlayingMusic
+          case Music.fadeOut oldSettings of
+            0 -> do
+              SDL.Mixer.haltMusic
+              SDL.Mixer.free oldMusic
+              pure NotPlayingMusic
+
+            n ->
+              SDL.Mixer.fadeOutMusic n >>= \case
+                False -> do
+                  SDL.Mixer.free oldMusic
+                  pure NotPlayingMusic
+
+                True ->
+                  pure (FadingOutMusic oldMusic)
+
 
         Just settings -> do
           if Music.file oldSettings == Music.file settings
@@ -145,22 +172,32 @@ adjustMusic oldPlayingMusic newMusicSettings =
               pure (PlayingMusic settings oldMusic)
 
             else do
-              stop oldMusic
-              music <- play settings
-              pure (PlayingMusic settings music)
+              case Music.fadeOut oldSettings of
+                0 -> do
+                  SDL.Mixer.haltMusic
+                  SDL.Mixer.free oldMusic
+                  music <- play settings
+                  pure (PlayingMusic settings music)
+
+                n -> do
+                  SDL.Mixer.fadeOutMusic n >>= \case
+                    False -> do
+                      SDL.Mixer.free oldMusic
+                      music <- play settings
+                      pure (PlayingMusic settings music)
+
+                    True ->
+                      pure (FadingOutMusic oldMusic)
 
   where
     play :: Music -> IO SDL.Mixer.Music
-    play (Music file volume) = do
-      music <- SDL.Mixer.load file
-      SDL.Mixer.setMusicVolume volume
-      SDL.Mixer.playMusic SDL.Mixer.Forever music
+    play settings = do
+      music <- SDL.Mixer.load (Music.file settings)
+      SDL.Mixer.setMusicVolume (Music.volume settings)
+      case Music.fadeIn settings of
+        0 -> SDL.Mixer.playMusic SDL.Mixer.Forever music
+        n -> SDL.Mixer.fadeInMusic n SDL.Mixer.Forever music
       pure music
-
-    stop :: SDL.Mixer.Music -> IO ()
-    stop music = do
-      SDL.Mixer.haltMusic
-      SDL.Mixer.free music
 
 processEvents ::
      forall msg state.
