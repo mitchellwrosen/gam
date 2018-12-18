@@ -1,7 +1,6 @@
 module Gam.Internal.Picture where
 
 import Gam.Internal.FontCache        (FontCache)
-import Gam.Internal.P                (P)
 import Gam.Internal.Prelude
 import Gam.Internal.SpriteSheet      (SpriteSheet(..))
 import Gam.Internal.SpriteSheetCache (SpriteSheetCache)
@@ -9,11 +8,11 @@ import Gam.Internal.TextStyle        (TextStyle(..))
 import Gam.Internal.V                (V)
 
 import qualified Gam.Internal.FontCache        as FontCache
-import qualified Gam.Internal.P                as P
 import qualified Gam.Internal.RGBA             as RGBA
 import qualified Gam.Internal.SpriteSheetCache as SpriteSheetCache
 import qualified Gam.Internal.Texture          as Texture
 import qualified Gam.Internal.Typeface         as Typeface
+import qualified Gam.Internal.V                as V
 
 import qualified Linear
 import qualified Linear.Affine as Linear
@@ -28,6 +27,7 @@ data Picture
   | FlipX Picture
   | FlipY Picture
   | Rotate Float Picture
+  | Scale (Float, Float) Picture
   | Sprite SpriteSheet Int
   | Textual TextStyle Text
   | Translate V Picture
@@ -52,37 +52,49 @@ render ::
   => Picture
   -> m ()
 render =
-  go 0 0 False False 1
+  go 1 False False 0 1 1 0
   where
-    go :: P -> Float -> Bool -> Bool -> Float -> Picture -> m ()
-    go !point !rotate !flipX !flipY !alpha = \case
+    go ::
+         Float
+      -> Bool
+      -> Bool
+      -> Float
+      -> Float
+      -> Float
+      -> V
+      -> Picture
+      -> m ()
+    go !alpha !flipX !flipY !rotate !scaleX !scaleY !translate = \case
       Alpha f pic ->
-        go point rotate flipX flipY (alpha * f) pic
+        go (alpha * f) flipX flipY rotate scaleX scaleY translate pic
 
       Append pic1 pic2 -> do
-        go point rotate flipX flipY alpha pic1
-        go point rotate flipX flipY alpha pic2
+        go alpha flipX flipY rotate scaleX scaleY translate pic1
+        go alpha flipX flipY rotate scaleX scaleY translate pic2
 
       Empty ->
         pure ()
 
       FlipX pic ->
-        go point rotate (not flipX) flipY alpha pic
+        go alpha (not flipX) flipY rotate scaleX scaleY translate pic
 
       FlipY pic ->
-        go point rotate flipX (not flipY) alpha pic
+        go alpha flipX (not flipY) rotate scaleX scaleY translate pic
 
       Rotate n pic ->
-        go point (n + rotate) flipX flipY alpha pic
+        go alpha flipX flipY (n + rotate) scaleX scaleY translate pic
+
+      Scale (x, y) pic ->
+        go alpha flipX flipY rotate (x * scaleX) (y * scaleY) translate pic
 
       Sprite sheet which ->
-        renderSprite (Texture.Opts alpha flipX flipY rotate) point sheet which
+        renderSprite (Texture.Opts alpha flipX flipY rotate) (scaleX, scaleY) translate sheet which
 
       Textual style text ->
-        renderText (Texture.Opts alpha flipX flipY rotate) point style text
+        renderText (Texture.Opts alpha flipX flipY rotate) (scaleX, scaleY) translate style text
 
       Translate v pic ->
-        go (P.add v point) rotate flipX flipY alpha pic
+        go alpha flipX flipY rotate scaleX scaleY (v + translate) pic
 
 renderSprite ::
      ( HasType SDL.Renderer r
@@ -91,11 +103,12 @@ renderSprite ::
      , MonadUnliftIO m
      )
   => Texture.Opts
-  -> P
+  -> (Float, Float)
+  -> V
   -> SpriteSheet
   -> Int
   -> m ()
-renderSprite opts point sheet which = do
+renderSprite opts (scaleX, scaleY) translate sheet which = do
   texture <-
     SpriteSheetCache.load (sheet ^. the @"file") (sheet ^. the @"transparent")
 
@@ -104,7 +117,7 @@ renderSprite opts point sheet which = do
     srcRect =
       SDL.Rectangle
         (Linear.P (Linear.V2 (nx * sx) (ny * sy)))
-        spriteV2
+        (Linear.V2 sx sy)
 
       where
         (ny, nx) =
@@ -120,15 +133,13 @@ renderSprite opts point sheet which = do
     (fromIntegral -> sx, fromIntegral -> sy) =
       sheet ^. the @"spriteSize"
 
-    spriteV2 :: Linear.V2 CInt
-    spriteV2 =
-      Linear.V2 sx sy
-
     dstRect :: SDL.Rectangle CInt
     dstRect =
       SDL.Rectangle
-        (round <$> P.unwrap point)
-        spriteV2
+        (round <$> Linear.P (V.toV2 translate))
+        (Linear.V2
+          (round (scaleX * fromIntegral sx))
+          (round (scaleY * fromIntegral sy)))
 
 renderText ::
      ( HasType FontCache r
@@ -137,11 +148,15 @@ renderText ::
      , MonadUnliftIO m
      )
   => Texture.Opts
-  -> P
+  -> (Float, Float)
+  -> V
   -> TextStyle
   -> Text
   -> m ()
-renderText opts point (TextStyle { aliased, color, font, kerning, outline, size, typeface }) text = do
+renderText opts (scaleX, scaleY) translate
+    (TextStyle { aliased, color, font, kerning, outline, size, typeface })
+    text = do
+
   font <-
     FontCache.load font size
 
@@ -174,8 +189,10 @@ renderText opts point (TextStyle { aliased, color, font, kerning, outline, size,
     dstRect :: SDL.Rectangle CInt
     dstRect =
       SDL.Rectangle
-        (round <$> P.unwrap point)
-        (Linear.V2 (Texture.width texture) (Texture.height texture))
+        (round <$> Linear.P (V.toV2 translate))
+        (Linear.V2
+          (round (scaleX * fromIntegral (Texture.width texture)))
+          (round (scaleY * fromIntegral (Texture.height texture))))
 
   Texture.render
     opts
