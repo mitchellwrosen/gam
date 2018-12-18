@@ -17,8 +17,7 @@ data Env
 
 newtype Render a
   = Render (ReaderT Env IO a)
-  deriving newtype (Applicative, Functor, Monad, MonadIO, MonadReader Env,
-                     MonadUnliftIO)
+  deriving newtype (Applicative, Functor, Monad, MonadIO, MonadReader Env)
 
 run ::
      SDL.Window

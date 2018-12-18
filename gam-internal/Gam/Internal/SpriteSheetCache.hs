@@ -23,8 +23,8 @@ new =
 load ::
      ( HasType SDL.Renderer r
      , HasType SpriteSheetCache r
+     , MonadIO m
      , MonadReader r m
-     , MonadUnliftIO m
      )
   => Text
   -> Maybe RGBA

@@ -17,8 +17,6 @@ library
     , StateVar
     , strict-tuple
     , text
-    , unliftio
-    , unliftio-core
     , unordered-containers
   default-extensions:
     BangPatterns

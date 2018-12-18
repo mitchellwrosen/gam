@@ -46,8 +46,8 @@ render ::
      ( HasType FontCache r
      , HasType SDL.Renderer r
      , HasType SpriteSheetCache r
+     , MonadIO m
      , MonadReader r m
-     , MonadUnliftIO m
      )
   => Picture
   -> m ()
@@ -99,8 +99,8 @@ render =
 renderSprite ::
      ( HasType SDL.Renderer r
      , HasType SpriteSheetCache r
+     , MonadIO m
      , MonadReader r m
-     , MonadUnliftIO m
      )
   => Texture.Opts
   -> (Float, Float)
@@ -144,8 +144,8 @@ renderSprite opts (scaleX, scaleY) translate sheet which = do
 renderText ::
      ( HasType FontCache r
      , HasType SDL.Renderer r
+     , MonadIO m
      , MonadReader r m
-     , MonadUnliftIO m
      )
   => Texture.Opts
   -> (Float, Float)
@@ -173,17 +173,16 @@ renderText opts (scaleX, scaleY) translate
     oldStyles <- SDL.Font.getStyle font
     when (oldStyles /= newStyles) (SDL.Font.setStyle font newStyles)
 
-  let
-    createSurface =
-      if aliased
-        then SDL.Font.solid
-        else SDL.Font.blended
+
+  surface <-
+    if aliased
+      then SDL.Font.solid   font (RGBA.toV4 color) text
+      else SDL.Font.blended font (RGBA.toV4 color) text
 
   texture <-
-    bracket
-      (createSurface font (RGBA.toV4 color) text)
-      SDL.freeSurface
-      Texture.fromSurface
+    Texture.fromSurface surface
+
+  SDL.freeSurface surface
 
   let
     dstRect :: SDL.Rectangle CInt

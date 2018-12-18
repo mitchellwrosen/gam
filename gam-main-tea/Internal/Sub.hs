@@ -6,7 +6,6 @@ import Gam.Internal.Music (Music)
 
 import qualified SDL
 
-import Data.List (nub)
 import Data.Monoid (First(..))
 
 

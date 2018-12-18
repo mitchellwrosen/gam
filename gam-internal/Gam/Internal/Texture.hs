@@ -25,18 +25,16 @@ data Opts
   }
 
 load ::
-     (HasType SDL.Renderer r, MonadReader r m, MonadUnliftIO m)
+     (HasType SDL.Renderer r, MonadReader r m, MonadIO m)
   => FilePath
   -> Maybe RGBA
   -> m Texture
-load path transparent =
-  bracket
-    (SDL.Image.load path)
-    SDL.freeSurface
-    (\surface -> do
-      SDL.surfaceColorKey surface $=!
-        (RGBA.toV4 <$> transparent)
-      fromSurface surface)
+load path transparent = do
+  surface <- SDL.Image.load path
+  SDL.surfaceColorKey surface $=! (RGBA.toV4 <$> transparent)
+  texture <- fromSurface surface
+  SDL.freeSurface surface
+  pure texture
 
 fromSurface ::
      (HasType SDL.Renderer r, MonadIO m, MonadReader r m)

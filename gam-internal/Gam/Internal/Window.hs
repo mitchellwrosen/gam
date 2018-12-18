@@ -37,8 +37,8 @@ render ::
      , HasType SDL.Renderer r
      , HasType SDL.Window r
      , HasType SpriteSheetCache r
+     , MonadIO m
      , MonadReader r m
-     , MonadUnliftIO m
      )
   => Window -> m ()
 render (Window { title, size, background, picture }) = do

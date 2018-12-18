@@ -6,8 +6,6 @@ module Gam.Main.Tea.Sub
 import Gam.Internal.Prelude
 import Internal.Sub
 
-import qualified SDL
-
 
 micros :: (Int -> msg) -> Sub msg
 micros f =
