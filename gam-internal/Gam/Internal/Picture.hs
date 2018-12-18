@@ -9,7 +9,6 @@ import Gam.Internal.V            (V)
 import qualified Gam.Internal.P            as P
 import qualified Gam.Internal.Texture      as Texture
 import qualified Gam.Internal.TextureCache as TextureCache
-import qualified Gam.Internal.V            as V
 
 import qualified Linear
 import qualified Linear.Affine as Linear
@@ -17,13 +16,14 @@ import qualified SDL
 
 
 data Picture
-  = Empty
-  | Sprite SpriteSheet Int
-  | Translate V Picture
-  | Rotate Float Picture
+  = Alpha Float Picture
+  | Append Picture Picture
+  | Empty
   | FlipX Picture
   | FlipY Picture
-  | Append Picture Picture
+  | Rotate Float Picture
+  | Sprite SpriteSheet Int
+  | Translate V Picture
 
 instance Monoid Picture where
   mempty = Empty
@@ -34,61 +34,37 @@ instance Semigroup Picture where
   pic1 <> Empty = pic1
   pic1 <> pic2 = Append pic1 pic2
 
-sprite :: SpriteSheet -> Int -> Picture
-sprite sheet which =
-  Sprite sheet which
-
-translate :: V -> Picture -> Picture
-translate v = \case
-  Empty ->
-    Empty
-
-  Translate w pic ->
-    Translate (V.add w v) pic
-
-  pic@Sprite{} -> Translate v pic
-  pic@Rotate{} -> Translate v pic
-  pic@Append{} -> Translate v pic
-
-rotate :: Float -> Picture -> Picture
-rotate n = \case
-  Empty ->
-    Empty
-
-  Rotate m pic ->
-    Rotate (n + m) pic
-
-  pic@Sprite{}    -> Rotate n pic
-  pic@Translate{} -> Rotate n pic
-  pic@Append{}    -> Rotate n pic
-
 render :: SDL.Renderer -> TextureCache -> Picture -> IO ()
 render renderer textureCache =
-  go 0 0 False False
+  go 0 0 False False 1
   where
-    go :: P -> Float -> Bool -> Bool -> Picture -> IO ()
-    go !point !degrees !flipX !flipY = \case
+    go :: P -> Float -> Bool -> Bool -> Float -> Picture -> IO ()
+    go !point !degrees !flipX !flipY !alpha = \case
+      Alpha f pic ->
+        go point degrees flipX flipY (alpha * f) pic
+
+      Append pic1 pic2 -> do
+        go point degrees flipX flipY alpha pic1
+        go point degrees flipX flipY alpha pic2
+
       Empty ->
         pure ()
 
-      Sprite sheet which ->
-        renderSprite renderer textureCache sheet which point degrees flipX flipY
-
-      Translate v pic ->
-        go (P.add v point) degrees flipX flipY pic
-
-      Rotate n pic ->
-        go point (n + degrees) flipX flipY pic
-
       FlipX pic ->
-        go point degrees (not flipX) flipY pic
+        go point degrees (not flipX) flipY alpha pic
 
       FlipY pic ->
-        go point degrees flipX (not flipY) pic
+        go point degrees flipX (not flipY) alpha pic
 
-      Append pic1 pic2 -> do
-        go point degrees flipX flipY pic1
-        go point degrees flipX flipY pic2
+      Rotate n pic ->
+        go point (n + degrees) flipX flipY alpha pic
+
+      Sprite sheet which ->
+        renderSprite renderer textureCache sheet which point degrees flipX flipY
+          alpha
+
+      Translate v pic ->
+        go (P.add v point) degrees flipX flipY alpha pic
 
 renderSprite ::
      SDL.Renderer
@@ -99,8 +75,9 @@ renderSprite ::
   -> Float
   -> Bool
   -> Bool
+  -> Float
   -> IO ()
-renderSprite renderer textureCache sheet which point degrees flipX flipY = do
+renderSprite renderer textureCache sheet which point degrees flipX flipY alpha = do
   texture <-
     TextureCache.load
       textureCache
@@ -126,6 +103,7 @@ renderSprite renderer textureCache sheet which point degrees flipX flipY = do
     (realToFrac degrees)
     flipX
     flipY
+    alpha
     texture
 
   where

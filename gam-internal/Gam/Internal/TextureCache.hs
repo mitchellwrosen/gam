@@ -3,14 +3,11 @@ module Gam.Internal.TextureCache where
 import Gam.Internal.Prelude
 import Gam.Internal.RGBA    (RGBA)
 import Gam.Internal.Texture (Texture)
-import Gam.Internal.V       (V)
 
 import qualified Gam.Internal.Texture as Texture
 
-import Data.Tuple.Strict (T2(..))
-
 import qualified Data.HashMap.Strict as HashMap
-import qualified Data.Text as Text
+import qualified Data.Text           as Text
 import qualified SDL
 
 

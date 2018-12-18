@@ -12,7 +12,10 @@ import qualified SDL.Image
 import qualified Linear
 
 data Texture
-  = Texture (CInt, CInt) SDL.Texture
+  = Texture
+  { size :: (CInt, CInt)
+  , texture :: SDL.Texture
+  }
 
 load :: SDL.Renderer -> FilePath -> Maybe RGBA -> IO Texture
 load renderer path transparent =
@@ -32,7 +35,13 @@ fromSurface renderer transparent surface = do
   texture <-
     SDL.createTextureFromSurface renderer surface
 
-  pure (Texture (x, y) texture)
+  SDL.textureBlendMode texture $=!
+    SDL.BlendAlphaBlend
+
+  pure Texture
+    { size = (x, y)
+    , texture = texture
+    }
 
 height :: Texture -> CInt
 height (Texture (_, y) _) =
@@ -49,9 +58,16 @@ render ::
   -> CDouble
   -> Bool
   -> Bool
+  -> Float
   -> Texture
   -> IO ()
-render renderer src dst degrees flipX flipY (Texture _ texture) =
+render renderer src dst degrees flipX flipY alpha (Texture _ texture) = do
+  do
+    let alphaVar = SDL.textureAlphaMod texture
+    let newAlpha = fromIntegral (round (255 * alpha))
+    oldAlpha <- SDL.get alphaVar
+    when (oldAlpha /= newAlpha) (alphaVar $=! newAlpha)
+
   SDL.copyEx
     renderer
     texture
