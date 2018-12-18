@@ -3,6 +3,7 @@ module Gam.Internal.Prelude
   ) where
 
 import Control.Applicative         as X
+import Control.Category            as X ((>>>))
 import Control.Lens                as X (view, (^.))
 import Control.Monad.IO.Class      as X (MonadIO(..))
 import Control.Monad.IO.Unlift     as X (MonadUnliftIO)
@@ -13,7 +14,7 @@ import Data.Generics.Product.Typed as X (HasType)
 import Data.Hashable               as X (Hashable)
 import Data.HashMap.Strict         as X (HashMap)
 import Data.IORef                  as X
-import Data.Maybe                  as X (fromMaybe)
+import Data.Maybe                  as X (catMaybes, fromMaybe)
 import Data.StateVar               as X (($=!))
 import Data.Text                   as X (Text)
 import Data.Word                   as X

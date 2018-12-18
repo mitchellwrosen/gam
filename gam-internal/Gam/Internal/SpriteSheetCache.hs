@@ -21,14 +21,14 @@ new =
 
 -- lookup + put
 load ::
-    ( HasType SDL.Renderer r
-    , HasType SpriteSheetCache r
-    , MonadReader r m
-    , MonadUnliftIO m
-    )
- => Text
- -> Maybe RGBA
- -> m Texture
+     ( HasType SDL.Renderer r
+     , HasType SpriteSheetCache r
+     , MonadReader r m
+     , MonadUnliftIO m
+     )
+  => Text
+  -> Maybe RGBA
+  -> m Texture
 load path transparent = do
   lookup path transparent >>= \case
     Nothing -> do

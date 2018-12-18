@@ -57,6 +57,7 @@ library
   default-language:
     Haskell2010
   exposed-modules:
+    Gam.Internal.FontCache
     Gam.Internal.P
     Gam.Internal.Picture
     Gam.Internal.Prelude
@@ -64,7 +65,9 @@ library
     Gam.Internal.RGBA
     Gam.Internal.SpriteSheet
     Gam.Internal.SpriteSheetCache
+    Gam.Internal.TextStyle
     Gam.Internal.Texture
+    Gam.Internal.Typeface
     Gam.Internal.V
     Gam.Internal.Window
   ghc-options:

@@ -1,5 +1,6 @@
 module Gam.Internal.Window where
 
+import Gam.Internal.FontCache        (FontCache)
 import Gam.Internal.Picture          (Picture)
 import Gam.Internal.Prelude
 import Gam.Internal.RGBA             (RGBA)
@@ -32,7 +33,8 @@ new window =
         }
 
 render ::
-     ( HasType SDL.Renderer r
+     ( HasType FontCache r
+     , HasType SDL.Renderer r
      , HasType SDL.Window r
      , HasType SpriteSheetCache r
      , MonadReader r m

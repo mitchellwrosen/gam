@@ -2,19 +2,26 @@ module Gam.Internal.Texture where
 
 import Gam.Internal.Prelude
 import Gam.Internal.RGBA    (RGBA)
-import Gam.Internal.V       (V)
 
 import qualified Gam.Internal.RGBA as RGBA
-import qualified Gam.Internal.V    as V
 
 import qualified Linear
 import qualified SDL
 import qualified SDL.Image
 
+-- TODO no need to cache dimensions, can fetch them in IO
 data Texture
   = Texture
   { size    :: (CInt, CInt)
   , texture :: SDL.Texture
+  }
+
+data Opts
+  = Opts
+  { alpha :: Float
+  , flipX :: Bool
+  , flipY :: Bool
+  , rotate :: Float
   }
 
 load ::
@@ -26,19 +33,18 @@ load path transparent =
   bracket
     (SDL.Image.load path)
     SDL.freeSurface
-    (fromSurface transparent)
+    (\surface -> do
+      SDL.surfaceColorKey surface $=!
+        (RGBA.toV4 <$> transparent)
+      fromSurface surface)
 
 fromSurface ::
      (HasType SDL.Renderer r, MonadIO m, MonadReader r m)
-  => Maybe RGBA
-  -> SDL.Surface
+  => SDL.Surface
   -> m Texture
-fromSurface transparent surface = do
+fromSurface surface = do
   Linear.V2 x y <-
     SDL.surfaceDimensions surface
-
-  SDL.surfaceColorKey surface $=!
-    (RGBA.toV4 <$> transparent)
 
   texture <- do
     renderer <- view (the @SDL.Renderer)
@@ -62,18 +68,15 @@ width (Texture (x, _) _) =
 
 render ::
      (HasType SDL.Renderer r, MonadIO m, MonadReader r m)
-  => SDL.Rectangle CInt
-  -> SDL.Rectangle CInt
-  -> CDouble
-  -> Bool
-  -> Bool
-  -> Float
+  => Opts
+  -> Maybe (SDL.Rectangle CInt)
+  -> Maybe (SDL.Rectangle CInt)
   -> Texture
   -> m ()
-render src dst degrees flipX flipY alpha (Texture _ texture) = do
+render (Opts { alpha, flipX, flipY, rotate }) src dst (Texture _ texture) = do
   do
     let alphaVar = SDL.textureAlphaMod texture
-    let newAlpha = fromIntegral (round (255 * alpha))
+    let newAlpha = round (255 * alpha)
     oldAlpha <- SDL.get alphaVar
     when (oldAlpha /= newAlpha) (alphaVar $=! newAlpha)
 
@@ -82,8 +85,8 @@ render src dst degrees flipX flipY alpha (Texture _ texture) = do
   SDL.copyEx
     renderer
     texture
-    (Just src)
-    (Just dst)
-    degrees
+    src
+    dst
+    (realToFrac rotate)
     Nothing
     (Linear.V2 flipX flipY)

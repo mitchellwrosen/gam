@@ -1,5 +1,6 @@
 module Gam.Internal.Render where
 
+import Gam.Internal.FontCache        (FontCache)
 import Gam.Internal.Prelude
 import Gam.Internal.SpriteSheetCache (SpriteSheetCache)
 
@@ -10,6 +11,7 @@ data Env
   = Env
   { window           :: SDL.Window
   , renderer         :: SDL.Renderer
+  , fontCache        :: FontCache
   , spriteSheetCache :: SpriteSheetCache
   } deriving stock (Generic)
 
@@ -21,8 +23,14 @@ newtype Render a
 run ::
      SDL.Window
   -> SDL.Renderer
+  -> FontCache
   -> SpriteSheetCache
   -> Render a
   -> IO a
-run window renderer spriteSheetCache (Render m) = do
-  runReaderT m (Env window renderer spriteSheetCache)
+run window renderer fontCache spriteSheetCache (Render m) = do
+  runReaderT m Env
+    { window = window
+    , renderer = renderer
+    , fontCache = fontCache
+    , spriteSheetCache = spriteSheetCache
+    }

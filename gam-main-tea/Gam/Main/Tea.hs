@@ -4,6 +4,7 @@ import Gam.Internal.Prelude
 import Gam.Internal.Window  (Window)
 import Internal.Sub         (Sub(..))
 
+import qualified Gam.Internal.FontCache        as FontCache
 import qualified Gam.Internal.Render           as Render
 import qualified Gam.Internal.SpriteSheetCache as SpriteSheetCache
 import qualified Gam.Internal.Window           as Window
@@ -33,14 +34,23 @@ main state (Sub subFps subSdl sdlInits) update render = do
       , SDL.rendererTargetTexture = False
       }
 
+  fontCache <-
+    FontCache.new
+
   spriteSheetCache <-
     SpriteSheetCache.new
+
+  let
+    doRender =
+      render >>>
+      Window.render >>>
+      Render.run window renderer fontCache spriteSheetCache
 
   loop
     subFps
     subSdl
     update
-    (Render.run window renderer spriteSheetCache . Window.render . render)
+    doRender
     state
 
 loop
