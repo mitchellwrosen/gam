@@ -9,6 +9,7 @@ import qualified Gam.Internal.Window as Window
 
 import Control.Concurrent (threadDelay)
 import GHC.Clock
+import System.Mem         (performGC)
 
 import qualified SDL
 
@@ -112,6 +113,8 @@ loopWithFps subFps subSdl update render =
         update (subFps (time0 - prev)) <$> handleAll state0
 
       render state1
+
+      performGC
 
       time1 <- monotonicMicros
 
