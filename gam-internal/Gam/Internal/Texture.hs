@@ -7,32 +7,41 @@ import Gam.Internal.V       (V)
 import qualified Gam.Internal.RGBA as RGBA
 import qualified Gam.Internal.V    as V
 
+import qualified Linear
 import qualified SDL
 import qualified SDL.Image
-import qualified Linear
 
 data Texture
   = Texture
-  { size :: (CInt, CInt)
+  { size    :: (CInt, CInt)
   , texture :: SDL.Texture
   }
 
-load :: SDL.Renderer -> FilePath -> Maybe RGBA -> IO Texture
-load renderer path transparent =
+load ::
+     (HasType SDL.Renderer r, MonadReader r m, MonadUnliftIO m)
+  => FilePath
+  -> Maybe RGBA
+  -> m Texture
+load path transparent =
   bracket
-  (SDL.Image.load path)
-  SDL.freeSurface
-  (fromSurface renderer transparent)
+    (SDL.Image.load path)
+    SDL.freeSurface
+    (fromSurface transparent)
 
-fromSurface :: SDL.Renderer -> Maybe RGBA -> SDL.Surface -> IO Texture
-fromSurface renderer transparent surface = do
+fromSurface ::
+     (HasType SDL.Renderer r, MonadIO m, MonadReader r m)
+  => Maybe RGBA
+  -> SDL.Surface
+  -> m Texture
+fromSurface transparent surface = do
   Linear.V2 x y <-
     SDL.surfaceDimensions surface
 
   SDL.surfaceColorKey surface $=!
     (RGBA.toV4 <$> transparent)
 
-  texture <-
+  texture <- do
+    renderer <- view (the @SDL.Renderer)
     SDL.createTextureFromSurface renderer surface
 
   SDL.textureBlendMode texture $=!
@@ -52,21 +61,23 @@ width (Texture (x, _) _) =
   x
 
 render ::
-     SDL.Renderer
-  -> SDL.Rectangle CInt
+     (HasType SDL.Renderer r, MonadIO m, MonadReader r m)
+  => SDL.Rectangle CInt
   -> SDL.Rectangle CInt
   -> CDouble
   -> Bool
   -> Bool
   -> Float
   -> Texture
-  -> IO ()
-render renderer src dst degrees flipX flipY alpha (Texture _ texture) = do
+  -> m ()
+render src dst degrees flipX flipY alpha (Texture _ texture) = do
   do
     let alphaVar = SDL.textureAlphaMod texture
     let newAlpha = fromIntegral (round (255 * alpha))
     oldAlpha <- SDL.get alphaVar
     when (oldAlpha /= newAlpha) (alphaVar $=! newAlpha)
+
+  renderer <- view (the @SDL.Renderer)
 
   SDL.copyEx
     renderer

@@ -11,12 +11,14 @@ library
     , lens
     , linear
     , mtl
-    , safe-exceptions
     , sdl2
     , sdl2-image
+    , sdl2-ttf
     , StateVar
     , strict-tuple
     , text
+    , unliftio
+    , unliftio-core
     , unordered-containers
   default-extensions:
     BangPatterns
@@ -61,8 +63,8 @@ library
     Gam.Internal.Render
     Gam.Internal.RGBA
     Gam.Internal.SpriteSheet
+    Gam.Internal.SpriteSheetCache
     Gam.Internal.Texture
-    Gam.Internal.TextureCache
     Gam.Internal.V
     Gam.Internal.Window
   ghc-options:

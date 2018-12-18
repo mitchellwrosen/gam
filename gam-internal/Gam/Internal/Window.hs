@@ -1,13 +1,14 @@
 module Gam.Internal.Window where
 
-import Gam.Internal.Picture (Picture)
+import Gam.Internal.Picture          (Picture)
 import Gam.Internal.Prelude
-import Gam.Internal.Render
-import Gam.Internal.RGBA    (RGBA)
-import Gam.Internal.V       (V(..))
+import Gam.Internal.RGBA             (RGBA)
+import Gam.Internal.SpriteSheetCache (SpriteSheetCache)
+import Gam.Internal.V                (V(..))
 
-import qualified Gam.Internal.RGBA as RGBA
-import qualified Gam.Internal.V    as V
+import qualified Gam.Internal.Picture as Picture
+import qualified Gam.Internal.RGBA    as RGBA
+import qualified Gam.Internal.V       as V
 
 import qualified SDL
 
@@ -30,10 +31,17 @@ new window =
             round <$> V.toV2 (window ^. the @"size")
         }
 
-render :: Window -> Render ()
-render (Window { title, size, background }) = do
-  Env window renderer <-
-    ask
+render ::
+     ( HasType SDL.Renderer r
+     , HasType SDL.Window r
+     , HasType SpriteSheetCache r
+     , MonadReader r m
+     , MonadUnliftIO m
+     )
+  => Window -> m ()
+render (Window { title, size, background, picture }) = do
+  window <- view (the @SDL.Window)
+  renderer <- view (the @SDL.Renderer)
 
   do
     let windowTitleVar = SDL.windowTitle window
@@ -53,4 +61,5 @@ render (Window { title, size, background }) = do
     when (oldBackground /= newBackground) (backgroundVar $=! newBackground)
 
   SDL.clear renderer
+  Picture.render picture
   SDL.present renderer

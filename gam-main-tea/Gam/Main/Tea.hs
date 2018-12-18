@@ -4,8 +4,9 @@ import Gam.Internal.Prelude
 import Gam.Internal.Window  (Window)
 import Internal.Sub         (Sub(..))
 
-import qualified Gam.Internal.Render as Render
-import qualified Gam.Internal.Window as Window
+import qualified Gam.Internal.Render           as Render
+import qualified Gam.Internal.SpriteSheetCache as SpriteSheetCache
+import qualified Gam.Internal.Window           as Window
 
 import Control.Concurrent (threadDelay)
 import GHC.Clock
@@ -32,11 +33,14 @@ main state (Sub subFps subSdl sdlInits) update render = do
       , SDL.rendererTargetTexture = False
       }
 
+  spriteSheetCache <-
+    SpriteSheetCache.new
+
   loop
     subFps
     subSdl
     update
-    (Render.run window renderer . Window.render . render)
+    (Render.run window renderer spriteSheetCache . Window.render . render)
     state
 
 loop
@@ -76,7 +80,7 @@ loopWithoutFps subSdl update render =
       render state
       event <- SDL.waitEvent
       case subSdl (SDL.eventPayload event) of
-        Nothing -> go state
+        Nothing  -> go state
         Just msg -> go (update msg state)
 
 loopWithFps ::
