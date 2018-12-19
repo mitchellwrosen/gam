@@ -1,7 +1,6 @@
 module Gam.Internal.SpriteSheetCache where
 
 import Gam.Internal.Prelude
-import Gam.Internal.RGBA    (RGBA)
 import Gam.Internal.Texture (Texture)
 
 import qualified Gam.Internal.Texture as Texture
@@ -11,9 +10,8 @@ import qualified Data.Text           as Text
 import qualified SDL
 
 
--- T2 needs Hashable...
 newtype SpriteSheetCache
-  = SpriteSheetCache (IORef (HashMap (Text, Maybe RGBA) Texture))
+  = SpriteSheetCache (IORef (HashMap Text Texture))
 
 new :: IO SpriteSheetCache
 new =
@@ -27,13 +25,12 @@ load ::
      , MonadReader r m
      )
   => Text
-  -> Maybe RGBA
   -> m Texture
-load path transparent =
-  lookup path transparent >>= \case
+load path =
+  lookup path >>= \case
     Nothing -> do
-      texture <- Texture.fromImageFile (Text.unpack path) transparent
-      put path transparent texture
+      texture <- Texture.fromImageFile (Text.unpack path)
+      put path texture
       pure texture
 
     Just texture ->
@@ -42,18 +39,16 @@ load path transparent =
 lookup ::
      (HasType SpriteSheetCache r, MonadReader r m, MonadIO m)
   => Text
-  -> Maybe RGBA
   -> m (Maybe Texture)
-lookup path transparent = do
+lookup path = do
   SpriteSheetCache cacheRef <- view (the @SpriteSheetCache)
-  liftIO (HashMap.lookup (path, transparent) <$> readIORef cacheRef)
+  liftIO (HashMap.lookup path <$> readIORef cacheRef)
 
 put ::
      (HasType SpriteSheetCache r, MonadReader r m, MonadIO m)
   => Text
-  -> Maybe RGBA
   -> Texture
   -> m ()
-put path transparent texture = do
+put path texture = do
   SpriteSheetCache cacheRef <- view (the @SpriteSheetCache)
-  liftIO (modifyIORef' cacheRef (HashMap.insert (path, transparent) texture))
+  liftIO (modifyIORef' cacheRef (HashMap.insert path texture))

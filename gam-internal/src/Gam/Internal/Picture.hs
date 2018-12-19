@@ -93,7 +93,7 @@ renderSprite ::
   -> m ()
 renderSprite opts (scaleX, scaleY) translate sheet which = do
   texture <-
-    SpriteSheetCache.load (sheet ^. the @"file") (sheet ^. the @"transparent")
+    SpriteSheetCache.load (sheet ^. the @"file")
 
   let
     srcRect :: SDL.Rectangle CInt

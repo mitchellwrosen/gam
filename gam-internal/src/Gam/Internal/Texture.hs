@@ -36,11 +36,9 @@ height (Texture _ (SDL.TextureInfo _ _ _ h)) =
 fromImageFile ::
      (HasType SDL.Renderer r, MonadReader r m, MonadIO m)
   => FilePath
-  -> Maybe RGBA
   -> m Texture
-fromImageFile path transparent = do
+fromImageFile path = do
   surface <- SDL.Image.load path
-  SDL.surfaceColorKey surface $=! (RGBA.toV4 <$> transparent)
   texture <- fromSurface surface
   SDL.freeSurface surface
   pure texture
