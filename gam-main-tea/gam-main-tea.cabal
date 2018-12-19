@@ -12,38 +12,9 @@ library
     , sdl2-ttf
   default-extensions:
     BangPatterns
-    ConstraintKinds
-    DataKinds
-    DefaultSignatures
-    DeriveAnyClass
-    DeriveFunctor
-    DeriveGeneric
-    DerivingStrategies
-    ExistentialQuantification
-    FlexibleContexts
-    FlexibleInstances
-    GADTs
-    GeneralizedNewtypeDeriving
-    InstanceSigs
-    KindSignatures
     LambdaCase
-    MagicHash
-    MultiParamTypeClasses
-    NamedFieldPuns
     NoImplicitPrelude
-    OverloadedLabels
-    OverloadedStrings
-    PatternSynonyms
-    RankNTypes
     ScopedTypeVariables
-    StandaloneDeriving
-    StrictData
-    TupleSections
-    TypeApplications
-    TypeFamilies
-    TypeOperators
-    UnicodeSyntax
-    ViewPatterns
   default-language:
     Haskell2010
   exposed-modules:

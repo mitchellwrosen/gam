@@ -7,6 +7,7 @@ import Linear (V2(..))
 
 newtype V
   = V_ (V2 Float)
+  deriving stock (Show)
   deriving newtype (Num)
 
 pattern V :: Float -> Float -> V

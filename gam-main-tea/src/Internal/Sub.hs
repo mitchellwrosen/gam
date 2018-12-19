@@ -16,6 +16,10 @@ data Sub msg
   , music :: Maybe Music
   }
 
+instance Monoid (Sub msg) where
+  mempty = Sub Nothing Nothing Nothing
+  mappend = (<>)
+
 instance Semigroup (Sub msg) where
   Sub fps1 event1 music1 <> Sub fps2 event2 music2 =
     Sub

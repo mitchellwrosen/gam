@@ -1,0 +1,21 @@
+cabal-version: 2.4
+
+name: gam-examples
+version: 0
+
+executable gam-example-planets
+  build-depends:
+      base
+    , gam
+    , gam-main-tea
+  default-extensions:
+    DerivingStrategies
+    NamedFieldPuns
+    OverloadedStrings
+    PatternSynonyms
+  default-language:
+    Haskell2010
+  ghc-options:
+    -Wall -O -threaded
+  main-is:
+    Planets.hs

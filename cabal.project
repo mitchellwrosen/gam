@@ -1,3 +1,4 @@
 packages: gam/
+          gam-examples/
           gam-internal/
           gam-main-tea/
