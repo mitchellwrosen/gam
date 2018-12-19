@@ -49,3 +49,5 @@ library
     Gam.Window
   ghc-options:
     -Wall
+  hs-source-dirs:
+    src

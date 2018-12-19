@@ -14,6 +14,7 @@ newtype P
 pattern P :: Float -> Float -> P
 pattern P x y =
   P_ (Linear.P (Linear.V2 x y))
+{-# COMPLETE P #-}
 
 
 add :: V -> P -> P

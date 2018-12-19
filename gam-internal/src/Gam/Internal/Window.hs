@@ -5,31 +5,33 @@ import Gam.Internal.Picture          (Picture)
 import Gam.Internal.Prelude
 import Gam.Internal.RGBA             (RGBA)
 import Gam.Internal.SpriteSheetCache (SpriteSheetCache)
-import Gam.Internal.V                (V(..))
 
 import qualified Gam.Internal.Picture as Picture
 import qualified Gam.Internal.RGBA    as RGBA
-import qualified Gam.Internal.V       as V
 
+import qualified Linear
 import qualified SDL
 
 data Window
   = Window
-  { title      :: Text
-  , size       :: V
-  , background :: RGBA
-  , picture    :: Picture
+  { background :: RGBA
+  , picture :: Picture
+  , scale :: (Float, Float)
+  , size :: (Int, Int)
+  , title :: Text
   } deriving stock (Generic)
 
 new :: MonadIO m => Window -> m SDL.Window
-new window =
-  SDL.createWindow (window ^. the @"title") windowConfig
+new (Window { size, title }) =
+  SDL.createWindow title windowConfig
   where
     windowConfig :: SDL.WindowConfig
     windowConfig =
       SDL.defaultWindow
         { SDL.windowInitialSize =
-            round <$> V.toV2 (window ^. the @"size")
+            case size of
+              (x, y) ->
+                Linear.V2 (fromIntegral x) (fromIntegral y)
         }
 
 render ::
@@ -40,27 +42,31 @@ render ::
      , MonadIO m
      , MonadReader r m
      )
-  => Window -> m ()
-render (Window { title, size, background, picture }) = do
+  => Window
+  -> m ()
+render (Window { background, picture, scale, size, title }) = do
   window <- view (the @SDL.Window)
   renderer <- view (the @SDL.Renderer)
-
-  do
-    let windowTitleVar = SDL.windowTitle window
-    oldTitle <- SDL.get windowTitleVar
-    when (oldTitle /= title) (windowTitleVar $=! title)
-
-  do
-    let newSize = round <$> V.toV2 size
-    let windowSizeVar = SDL.windowSize window
-    oldSize <- SDL.get windowSizeVar
-    when (oldSize /= newSize) (windowSizeVar $=! newSize)
 
   do
     let newBackground = RGBA.toV4 background
     let backgroundVar = SDL.rendererDrawColor renderer
     oldBackground <- SDL.get backgroundVar
     when (oldBackground /= newBackground) (backgroundVar $=! newBackground)
+
+  do
+    let newSize =
+          case size of
+            (x, y) ->
+              Linear.V2 (fromIntegral x) (fromIntegral y)
+    let windowSizeVar = SDL.windowSize window
+    oldSize <- SDL.get windowSizeVar
+    when (oldSize /= newSize) (windowSizeVar $=! newSize)
+
+  do
+    let windowTitleVar = SDL.windowTitle window
+    oldTitle <- SDL.get windowTitleVar
+    when (oldTitle /= title) (windowTitleVar $=! title)
 
   SDL.clear renderer
   Picture.render picture

@@ -72,3 +72,5 @@ library
   ghc-options:
     -Wall
     -fno-warn-name-shadowing
+  hs-source-dirs:
+    src

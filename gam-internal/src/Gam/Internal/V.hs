@@ -12,6 +12,7 @@ newtype V
 pattern V :: Float -> Float -> V
 pattern V x y =
   V_ (V2 x y)
+{-# COMPLETE V #-}
 
 add :: V -> V -> V
 add (V_ v) (V_ w) =

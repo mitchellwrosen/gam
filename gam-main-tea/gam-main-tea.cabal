@@ -1,6 +1,6 @@
 cabal-version: 2.4
 
-name: gam
+name: gam-main-tea
 version: 0
 
 library
@@ -51,5 +51,7 @@ library
     Gam.Main.Tea.Sub
   ghc-options:
     -Wall
+  hs-source-dirs:
+    src
   other-modules:
     Internal.Sub
