@@ -28,7 +28,7 @@ load ::
   => Text
   -> Maybe RGBA
   -> m SDL.Texture
-load path transparent = do
+load path transparent =
   lookup path transparent >>= \case
     Nothing -> do
       texture <- Texture.load (Text.unpack path) transparent

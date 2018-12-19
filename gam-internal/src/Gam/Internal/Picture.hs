@@ -1,18 +1,20 @@
 module Gam.Internal.Picture where
 
-import Gam.Internal.FontCache        (FontCache)
+import Gam.Internal.FontCache         (FontCache)
 import Gam.Internal.Prelude
-import Gam.Internal.SpriteSheet      (SpriteSheet(..))
-import Gam.Internal.SpriteSheetCache (SpriteSheetCache)
-import Gam.Internal.TextStyle        (TextStyle(..))
-import Gam.Internal.V                (V)
+import Gam.Internal.RenderedTextCache (RenderedTextCache)
+import Gam.Internal.SpriteSheet       (SpriteSheet(..))
+import Gam.Internal.SpriteSheetCache  (SpriteSheetCache)
+import Gam.Internal.TextStyle         (TextStyle(..))
+import Gam.Internal.V                 (V)
 
-import qualified Gam.Internal.FontCache        as FontCache
-import qualified Gam.Internal.RGBA             as RGBA
-import qualified Gam.Internal.SpriteSheetCache as SpriteSheetCache
-import qualified Gam.Internal.Texture          as Texture
-import qualified Gam.Internal.Typeface         as Typeface
-import qualified Gam.Internal.V                as V
+import qualified Gam.Internal.FontCache         as FontCache
+import qualified Gam.Internal.RenderedTextCache as RenderedTextCache
+import qualified Gam.Internal.RGBA              as RGBA
+import qualified Gam.Internal.SpriteSheetCache  as SpriteSheetCache
+import qualified Gam.Internal.Texture           as Texture
+import qualified Gam.Internal.Typeface          as Typeface
+import qualified Gam.Internal.V                 as V
 
 import qualified Linear
 import qualified Linear.Affine as Linear
@@ -33,6 +35,7 @@ data Picture
 render ::
      forall m r.
      ( HasType FontCache r
+     , HasType RenderedTextCache r
      , HasType SDL.Renderer r
      , HasType SpriteSheetCache r
      , MonadIO m
@@ -128,6 +131,7 @@ renderSprite opts (scaleX, scaleY) translate sheet which = do
 
 renderText ::
      ( HasType FontCache r
+     , HasType RenderedTextCache r
      , HasType SDL.Renderer r
      , MonadIO m
      , MonadReader r m
@@ -138,35 +142,10 @@ renderText ::
   -> TextStyle
   -> Text
   -> m ()
-renderText opts (scaleX, scaleY) translate
-    (TextStyle { aliased, color, font, kerning, outline, size, typeface })
-    text = do
-
-  font <-
-    FontCache.load font size
-
-  do
-    oldKerning <- SDL.Font.getKerning font
-    when (oldKerning /= kerning) (SDL.Font.setKerning font kerning)
-
-  do
-    oldOutline <- SDL.Font.getOutline font
-    when (oldOutline /= outline) (SDL.Font.setOutline font outline)
-
-  do
-    let newStyles = Typeface.toStyles typeface
-    oldStyles <- SDL.Font.getStyle font
-    when (oldStyles /= newStyles) (SDL.Font.setStyle font newStyles)
-
-  surface <-
-    if aliased
-      then SDL.Font.solid   font (RGBA.toV4 color) text
-      else SDL.Font.blended font (RGBA.toV4 color) text
+renderText opts (scaleX, scaleY) translate style text = do
 
   texture <-
-    Texture.fromSurface surface
-
-  SDL.freeSurface surface
+    RenderedTextCache.load style text
 
   SDL.TextureInfo _ _ width height <-
     SDL.queryTexture texture

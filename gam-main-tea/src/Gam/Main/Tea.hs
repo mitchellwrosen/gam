@@ -8,11 +8,12 @@ import Gam.Internal.Prelude
 import Gam.Internal.Window  (Window)
 import Internal.Sub         (Sub(..))
 
-import qualified Gam.Internal.FontCache        as FontCache
-import qualified Gam.Internal.Music            as Music
-import qualified Gam.Internal.Render           as Render
-import qualified Gam.Internal.SpriteSheetCache as SpriteSheetCache
-import qualified Gam.Internal.Window           as Window
+import qualified Gam.Internal.FontCache         as FontCache
+import qualified Gam.Internal.Music             as Music
+import qualified Gam.Internal.Render            as Render
+import qualified Gam.Internal.RenderedTextCache as RenderedTextCache
+import qualified Gam.Internal.SpriteSheetCache  as SpriteSheetCache
+import qualified Gam.Internal.Window            as Window
 
 import Control.Concurrent (threadDelay)
 import GHC.Clock
@@ -47,6 +48,9 @@ main state subs update render = do
   fontCache <-
     FontCache.new
 
+  renderedTextCache <-
+    RenderedTextCache.new
+
   spriteSheetCache <-
     SpriteSheetCache.new
 
@@ -55,7 +59,7 @@ main state subs update render = do
     doRender =
       render >>>
       Window.render >>>
-      Render.run window renderer fontCache spriteSheetCache
+      Render.run window renderer fontCache renderedTextCache spriteSheetCache
 
   now <-
     monotonicMicros

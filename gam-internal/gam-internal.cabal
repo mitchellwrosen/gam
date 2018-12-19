@@ -61,6 +61,7 @@ library
     Gam.Internal.Picture
     Gam.Internal.Prelude
     Gam.Internal.Render
+    Gam.Internal.RenderedTextCache
     Gam.Internal.RGBA
     Gam.Internal.SpriteSheet
     Gam.Internal.SpriteSheetCache

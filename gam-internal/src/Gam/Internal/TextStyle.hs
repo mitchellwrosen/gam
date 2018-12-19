@@ -13,4 +13,5 @@ data TextStyle
   , outline :: Int
   , size :: Int
   , typeface :: Typeface
-  } deriving stock (Generic)
+  } deriving stock (Eq, Generic)
+    deriving anyclass (Hashable)

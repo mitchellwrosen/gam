@@ -1,10 +1,11 @@
 module Gam.Internal.Window where
 
-import Gam.Internal.FontCache        (FontCache)
-import Gam.Internal.Picture          (Picture)
+import Gam.Internal.FontCache         (FontCache)
+import Gam.Internal.Picture           (Picture)
 import Gam.Internal.Prelude
-import Gam.Internal.RGBA             (RGBA)
-import Gam.Internal.SpriteSheetCache (SpriteSheetCache)
+import Gam.Internal.RenderedTextCache (RenderedTextCache)
+import Gam.Internal.RGBA              (RGBA)
+import Gam.Internal.SpriteSheetCache  (SpriteSheetCache)
 
 import qualified Gam.Internal.Picture as Picture
 import qualified Gam.Internal.RGBA    as RGBA
@@ -36,6 +37,7 @@ new (Window { size, title }) =
 
 render ::
      ( HasType FontCache r
+     , HasType RenderedTextCache r
      , HasType SDL.Renderer r
      , HasType SDL.Window r
      , HasType SpriteSheetCache r

@@ -7,6 +7,8 @@ import qualified SDL.Font
 
 data Typeface
   = Typeface Bool Bool Bool Bool
+  deriving stock (Eq, Generic)
+  deriving anyclass (Hashable)
 
 instance Monoid Typeface where
   mempty = Typeface False False False False
