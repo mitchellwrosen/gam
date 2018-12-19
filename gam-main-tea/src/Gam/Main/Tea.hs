@@ -64,7 +64,7 @@ main state subs update render = do
       Render.run window renderer fontCache renderedTextCache spriteSheetCache
 
   now <-
-    monotonicMicros
+    getMonotonicTimeNSec
 
   mainLoop
     subs
@@ -78,16 +78,16 @@ mainLoop
      (state -> Sub msg)
   -> (msg -> state -> IO state)
   -> (state -> IO ())
-  -> Int
+  -> Word64
   -> state
   -> IO ()
 mainLoop subs update render =
   go NotPlayingMusic
 
   where
-    go :: PlayingMusic -> Int -> state -> IO ()
+    go :: PlayingMusic -> Word64 -> state -> IO ()
     go oldPlayingMusic prevTime state0 = do
-      time0 <- monotonicMicros
+      time0 <- getMonotonicTimeNSec
 
       let
         currentSubs :: Sub msg
@@ -114,8 +114,8 @@ mainLoop subs update render =
       debugTime "gc" performGC
 
       -- Sleep until the next frame
-      time1 <- monotonicMicros
-      threadDelay (time0 + microsPerFrame - time1)
+      time1 <- getMonotonicTimeNSec
+      threadDelay (fromIntegral (time0 + (nanosPerFrame `div` 1000) - time1))
       go newPlayingMusic time0 state2
 
 -- Mini music state machine.
@@ -238,37 +238,32 @@ processEvents sub update state0 =
         loop state0
 
 stepGame ::
-     Maybe (Int -> msg)
-  -> Int
+     Maybe (Float -> msg)
+  -> Word64
   -> (msg -> state -> IO state)
   -> state
   -> IO state
-stepGame sub dt update =
+stepGame sub nanos update =
   case sub of
     Nothing -> pure
-    Just f  -> update (f dt)
+    Just f  -> update (f (fromIntegral nanos / 1000000))
 
 debugTime :: String -> IO a -> IO a
 debugTime str action =
   if debug
     then do
-      t0 <- monotonicMicros
+      t0 <- getMonotonicTimeNSec
       result <- action
-      t1 <- monotonicMicros
+      t1 <- getMonotonicTimeNSec
       putStrLn (str ++ ": " ++ show (t1 - t0) ++ "us")
       pure result
     else
       action
 
-monotonicMicros :: IO Int
-monotonicMicros = do
-  ns <- getMonotonicTimeNSec
-  pure (fromIntegral (ns `div` 1000))
-
-microsPerFrame :: Int
-microsPerFrame =
+nanosPerFrame :: Word64
+nanosPerFrame =
   fps 30
   where
-    fps :: Float -> Int
+    fps :: Float -> Word64
     fps n =
-      round (1000000 / n)
+      round (1000000000 / n)

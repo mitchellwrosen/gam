@@ -11,7 +11,7 @@ import Data.Monoid (First(..))
 
 data Sub msg
   = Sub
-  { fps :: Maybe (Int -> msg)
+  { fps :: Maybe (Float -> msg)
   , event :: Maybe (SDL.EventPayload -> Maybe msg)
   , music :: Maybe Music
   }

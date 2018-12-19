@@ -10,9 +10,11 @@ executable gam-example-planets
     , gam-main-tea
   default-extensions:
     DerivingStrategies
+    LambdaCase
     NamedFieldPuns
     OverloadedStrings
     PatternSynonyms
+    StrictData
   default-language:
     Haskell2010
   ghc-options:

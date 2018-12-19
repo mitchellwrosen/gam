@@ -1,6 +1,6 @@
 module Gam.Main.Tea.Sub
   ( Sub
-  , micros
+  , millis
   , mouseMotion
   , mouseClicks
   ) where
@@ -12,8 +12,8 @@ import Internal.Sub
 import qualified SDL
 
 
-micros :: (Int -> msg) -> Sub msg
-micros f =
+millis :: (Float -> msg) -> Sub msg
+millis f =
   Sub
     (Just f)
     Nothing
