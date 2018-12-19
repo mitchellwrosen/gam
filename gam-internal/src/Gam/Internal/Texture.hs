@@ -9,13 +9,6 @@ import qualified Linear
 import qualified SDL
 import qualified SDL.Image
 
--- TODO no need to cache dimensions, can fetch them in IO
-data Texture
-  = Texture
-  { size    :: (CInt, CInt)
-  , texture :: SDL.Texture
-  }
-
 data Opts
   = Opts
   { alpha :: Float
@@ -28,7 +21,7 @@ load ::
      (HasType SDL.Renderer r, MonadReader r m, MonadIO m)
   => FilePath
   -> Maybe RGBA
-  -> m Texture
+  -> m SDL.Texture
 load path transparent = do
   surface <- SDL.Image.load path
   SDL.surfaceColorKey surface $=! (RGBA.toV4 <$> transparent)
@@ -39,11 +32,8 @@ load path transparent = do
 fromSurface ::
      (HasType SDL.Renderer r, MonadIO m, MonadReader r m)
   => SDL.Surface
-  -> m Texture
+  -> m SDL.Texture
 fromSurface surface = do
-  Linear.V2 x y <-
-    SDL.surfaceDimensions surface
-
   texture <- do
     renderer <- view (the @SDL.Renderer)
     SDL.createTextureFromSurface renderer surface
@@ -51,27 +41,16 @@ fromSurface surface = do
   SDL.textureBlendMode texture $=!
     SDL.BlendAlphaBlend
 
-  pure Texture
-    { size = (x, y)
-    , texture = texture
-    }
-
-height :: Texture -> CInt
-height (Texture (_, y) _) =
-  y
-
-width :: Texture -> CInt
-width (Texture (x, _) _) =
-  x
+  pure texture
 
 render ::
      (HasType SDL.Renderer r, MonadIO m, MonadReader r m)
   => Opts
   -> Maybe (SDL.Rectangle CInt)
   -> Maybe (SDL.Rectangle CInt)
-  -> Texture
+  -> SDL.Texture
   -> m ()
-render (Opts { alpha, flipX, flipY, rotate }) src dst (Texture _ texture) = do
+render (Opts { alpha, flipX, flipY, rotate }) src dst texture = do
   do
     let alphaVar = SDL.textureAlphaMod texture
     let newAlpha = round (255 * alpha)

@@ -94,6 +94,9 @@ renderSprite opts (scaleX, scaleY) translate sheet which = do
   texture <-
     SpriteSheetCache.load (sheet ^. the @"file") (sheet ^. the @"transparent")
 
+  SDL.TextureInfo _ _ width _ <-
+    SDL.queryTexture texture
+
   let
     srcRect :: SDL.Rectangle CInt
     srcRect =
@@ -103,7 +106,7 @@ renderSprite opts (scaleX, scaleY) translate sheet which = do
 
       where
         (ny, nx) =
-          fromIntegral which `quotRem` (Texture.width texture `div` sx)
+          fromIntegral which `quotRem` (width `div` sx)
 
   Texture.render
     opts
@@ -155,7 +158,6 @@ renderText opts (scaleX, scaleY) translate
     oldStyles <- SDL.Font.getStyle font
     when (oldStyles /= newStyles) (SDL.Font.setStyle font newStyles)
 
-
   surface <-
     if aliased
       then SDL.Font.solid   font (RGBA.toV4 color) text
@@ -166,14 +168,17 @@ renderText opts (scaleX, scaleY) translate
 
   SDL.freeSurface surface
 
+  SDL.TextureInfo _ _ width height <-
+    SDL.queryTexture texture
+
   let
     dstRect :: SDL.Rectangle CInt
     dstRect =
       SDL.Rectangle
         (round <$> Linear.P (V.toV2 translate))
         (Linear.V2
-          (round (scaleX * fromIntegral (Texture.width texture)))
-          (round (scaleY * fromIntegral (Texture.height texture))))
+          (round (scaleX * fromIntegral width))
+          (round (scaleY * fromIntegral height)))
 
   Texture.render
     opts
