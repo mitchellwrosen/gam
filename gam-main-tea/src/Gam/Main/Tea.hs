@@ -23,6 +23,8 @@ import qualified SDL
 import qualified SDL.Font
 import qualified SDL.Mixer
 
+debug :: Bool
+debug = False
 
 main ::
      forall msg state.
@@ -106,10 +108,10 @@ mainLoop subs update render =
         stepGame (fps currentSubs) (time0 - prevTime) update state1
 
       -- Render the updated game state
-      render state2
+      debugTime "render" (render state2)
 
       -- GC every frame
-      performGC
+      debugTime "gc" performGC
 
       -- Sleep until the next frame
       time1 <- monotonicMicros
@@ -245,6 +247,18 @@ stepGame sub dt update =
   case sub of
     Nothing -> pure
     Just f  -> update (f dt)
+
+debugTime :: String -> IO a -> IO a
+debugTime str action =
+  if debug
+    then do
+      t0 <- monotonicMicros
+      result <- action
+      t1 <- monotonicMicros
+      putStrLn (str ++ ": " ++ show (t1 - t0) ++ "us")
+      pure result
+    else
+      action
 
 monotonicMicros :: IO Int
 monotonicMicros = do

@@ -5,9 +5,17 @@ import Gam.Internal.RGBA    (RGBA)
 
 import qualified Gam.Internal.RGBA as RGBA
 
+import System.IO.Unsafe (unsafeInterleaveIO)
+
 import qualified Linear
 import qualified SDL
 import qualified SDL.Image
+
+
+-- | A small wrapper around an SDL texture, paired with its
+-- unsafe-intearleave-IO'd info. Caveat emptor.
+data Texture
+  = Texture SDL.Texture SDL.TextureInfo
 
 data Opts
   = Opts
@@ -17,12 +25,20 @@ data Opts
   , rotate :: Float
   }
 
-load ::
+width :: Texture -> CInt
+width (Texture _ (SDL.TextureInfo _ _ w _)) =
+  w
+
+height :: Texture -> CInt
+height (Texture _ (SDL.TextureInfo _ _ _ h)) =
+  h
+
+fromImageFile ::
      (HasType SDL.Renderer r, MonadReader r m, MonadIO m)
   => FilePath
   -> Maybe RGBA
-  -> m SDL.Texture
-load path transparent = do
+  -> m Texture
+fromImageFile path transparent = do
   surface <- SDL.Image.load path
   SDL.surfaceColorKey surface $=! (RGBA.toV4 <$> transparent)
   texture <- fromSurface surface
@@ -32,7 +48,7 @@ load path transparent = do
 fromSurface ::
      (HasType SDL.Renderer r, MonadIO m, MonadReader r m)
   => SDL.Surface
-  -> m SDL.Texture
+  -> m Texture
 fromSurface surface = do
   texture <- do
     renderer <- view (the @SDL.Renderer)
@@ -41,16 +57,17 @@ fromSurface surface = do
   SDL.textureBlendMode texture $=!
     SDL.BlendAlphaBlend
 
-  pure texture
+  info <- liftIO (unsafeInterleaveIO (SDL.queryTexture texture))
+  pure (Texture texture info)
 
 render ::
      (HasType SDL.Renderer r, MonadIO m, MonadReader r m)
   => Opts
   -> Maybe (SDL.Rectangle CInt)
   -> Maybe (SDL.Rectangle CInt)
-  -> SDL.Texture
+  -> Texture
   -> m ()
-render (Opts { alpha, flipX, flipY, rotate }) src dst texture = do
+render (Opts { alpha, flipX, flipY, rotate }) src dst (Texture texture _) = do
   do
     let alphaVar = SDL.textureAlphaMod texture
     let newAlpha = round (255 * alpha)

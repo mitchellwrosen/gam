@@ -3,6 +3,7 @@ module Gam.Internal.RenderedTextCache where
 import Gam.Internal.FontCache (FontCache)
 import Gam.Internal.Prelude
 import Gam.Internal.TextStyle (TextStyle(..))
+import Gam.Internal.Texture   (Texture)
 
 import qualified Gam.Internal.FontCache as FontCache
 import qualified Gam.Internal.RGBA      as RGBA
@@ -16,7 +17,7 @@ import qualified SDL.Font
 
 -- TODO Rendered text cache expiry
 newtype RenderedTextCache
-  = RenderedTextCache (IORef (HashMap (TextStyle, Text) SDL.Texture))
+  = RenderedTextCache (IORef (HashMap (TextStyle, Text) Texture))
 
 new :: IO RenderedTextCache
 new =
@@ -31,7 +32,7 @@ load ::
      )
   => TextStyle
   -> Text
-  -> m SDL.Texture
+  -> m Texture
 load style@(TextStyle { aliased, color, font, kerning, outline, size, typeface })
     text =
   lookup style text >>= \case
@@ -76,7 +77,7 @@ lookup ::
      )
   => TextStyle
   -> Text
-  -> m (Maybe SDL.Texture)
+  -> m (Maybe Texture)
 lookup style text = do
   RenderedTextCache cacheRef <- view (the @RenderedTextCache)
   liftIO (HashMap.lookup (style, text) <$> readIORef cacheRef)
@@ -88,7 +89,7 @@ put ::
      )
   => TextStyle
   -> Text
-  -> SDL.Texture
+  -> Texture
   -> m ()
 put style text texture = do
   RenderedTextCache cacheRef <- view (the @RenderedTextCache)

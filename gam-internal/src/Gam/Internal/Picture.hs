@@ -8,18 +8,14 @@ import Gam.Internal.SpriteSheetCache  (SpriteSheetCache)
 import Gam.Internal.TextStyle         (TextStyle(..))
 import Gam.Internal.V                 (V)
 
-import qualified Gam.Internal.FontCache         as FontCache
 import qualified Gam.Internal.RenderedTextCache as RenderedTextCache
-import qualified Gam.Internal.RGBA              as RGBA
 import qualified Gam.Internal.SpriteSheetCache  as SpriteSheetCache
 import qualified Gam.Internal.Texture           as Texture
-import qualified Gam.Internal.Typeface          as Typeface
 import qualified Gam.Internal.V                 as V
 
 import qualified Linear
 import qualified Linear.Affine as Linear
 import qualified SDL
-import qualified SDL.Font
 
 
 data Picture
@@ -73,10 +69,12 @@ render =
         go alpha flipX flipY rotate (x * scaleX) (y * scaleY) translate pic
 
       Sprite sheet which ->
-        renderSprite (Texture.Opts alpha flipX flipY rotate) (scaleX, scaleY) translate sheet which
+        renderSprite (Texture.Opts alpha flipX flipY rotate) (scaleX, scaleY)
+          translate sheet which
 
       Textual style text ->
-        renderText (Texture.Opts alpha flipX flipY rotate) (scaleX, scaleY) translate style text
+        renderText (Texture.Opts alpha flipX flipY rotate) (scaleX, scaleY)
+          translate style text
 
       Translate v pic ->
         go alpha flipX flipY rotate scaleX scaleY (v + translate) pic
@@ -97,9 +95,6 @@ renderSprite opts (scaleX, scaleY) translate sheet which = do
   texture <-
     SpriteSheetCache.load (sheet ^. the @"file") (sheet ^. the @"transparent")
 
-  SDL.TextureInfo _ _ width _ <-
-    SDL.queryTexture texture
-
   let
     srcRect :: SDL.Rectangle CInt
     srcRect =
@@ -109,7 +104,7 @@ renderSprite opts (scaleX, scaleY) translate sheet which = do
 
       where
         (ny, nx) =
-          fromIntegral which `quotRem` (width `div` sx)
+          fromIntegral which `quotRem` (Texture.width texture `div` sx)
 
   Texture.render
     opts
@@ -143,12 +138,8 @@ renderText ::
   -> Text
   -> m ()
 renderText opts (scaleX, scaleY) translate style text = do
-
   texture <-
     RenderedTextCache.load style text
-
-  SDL.TextureInfo _ _ width height <-
-    SDL.queryTexture texture
 
   let
     dstRect :: SDL.Rectangle CInt
@@ -156,8 +147,8 @@ renderText opts (scaleX, scaleY) translate style text = do
       SDL.Rectangle
         (round <$> Linear.P (V.toV2 translate))
         (Linear.V2
-          (round (scaleX * fromIntegral width))
-          (round (scaleY * fromIntegral height)))
+          (round (scaleX * fromIntegral (Texture.width texture)))
+          (round (scaleY * fromIntegral (Texture.height texture))))
 
   Texture.render
     opts
