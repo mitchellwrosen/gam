@@ -1,4 +1,7 @@
-module Gam.Main.Tea where
+module Gam.Main.Tea
+  ( main
+  , Sub
+  ) where
 
 import Gam.Internal.Music   (Music)
 import Gam.Internal.Prelude
@@ -24,7 +27,7 @@ main ::
      forall msg state.
      state
   -> (state -> Sub msg)
-  -> (msg -> state -> state)
+  -> (msg -> state -> IO state)
   -> (state -> Window)
   -> IO ()
 main state subs update render = do
@@ -67,7 +70,7 @@ main state subs update render = do
 mainLoop
   :: forall msg state.
      (state -> Sub msg)
-  -> (msg -> state -> state)
+  -> (msg -> state -> IO state)
   -> (state -> IO ())
   -> Int
   -> state
@@ -95,9 +98,8 @@ mainLoop subs update render =
 
       -- Step the game forward per how much time has passed between the
       -- beginning of the previous loop and the beginning of this loop
-      let
-        state2 =
-          stepGame (fps currentSubs) (time0 - prevTime) update state1
+      state2 <-
+        stepGame (fps currentSubs) (time0 - prevTime) update state1
 
       -- Render the updated game state
       render state2
@@ -202,7 +204,7 @@ adjustMusic oldPlayingMusic newMusicSettings =
 processEvents ::
      forall msg state.
      Maybe (SDL.EventPayload -> Maybe msg)
-  -> (msg -> state -> state)
+  -> (msg -> state -> IO state)
   -> state
   -> IO state
 processEvents sub update state0 =
@@ -225,19 +227,19 @@ processEvents sub update state0 =
                   loop state
 
                 Just msg ->
-                  loop (update msg state)
+                  update msg state >>= loop
       in
         loop state0
 
 stepGame ::
      Maybe (Int -> msg)
   -> Int
-  -> (msg -> state -> state)
+  -> (msg -> state -> IO state)
   -> state
-  -> state
+  -> IO state
 stepGame sub dt update =
   case sub of
-    Nothing -> id
+    Nothing -> pure
     Just f  -> update (f dt)
 
 monotonicMicros :: IO Int
@@ -245,7 +247,10 @@ monotonicMicros = do
   ns <- getMonotonicTimeNSec
   pure (fromIntegral (ns `div` 1000))
 
--- 60 fps
 microsPerFrame :: Int
 microsPerFrame =
-  16667
+  fps 30
+  where
+    fps :: Float -> Int
+    fps n =
+      round (1000000 / n)

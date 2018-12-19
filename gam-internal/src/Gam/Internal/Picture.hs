@@ -22,8 +22,6 @@ import qualified SDL.Font
 
 data Picture
   = Alpha Float Picture
-  | Append Picture Picture
-  | Empty
   | FlipX Picture
   | FlipY Picture
   | Rotate Float Picture
@@ -31,15 +29,6 @@ data Picture
   | Sprite SpriteSheet Int
   | Textual TextStyle Text
   | Translate V Picture
-
-instance Monoid Picture where
-  mempty = Empty
-  mappend = (<>)
-
-instance Semigroup Picture where
-  Empty <> pic2 = pic2
-  pic1 <> Empty = pic1
-  pic1 <> pic2 = Append pic1 pic2
 
 render ::
      forall m r.
@@ -67,13 +56,6 @@ render =
     go !alpha !flipX !flipY !rotate !scaleX !scaleY !translate = \case
       Alpha f pic ->
         go (alpha * f) flipX flipY rotate scaleX scaleY translate pic
-
-      Append pic1 pic2 -> do
-        go alpha flipX flipY rotate scaleX scaleY translate pic1
-        go alpha flipX flipY rotate scaleX scaleY translate pic2
-
-      Empty ->
-        pure ()
 
       FlipX pic ->
         go alpha (not flipX) flipY rotate scaleX scaleY translate pic

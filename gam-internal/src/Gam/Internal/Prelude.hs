@@ -8,6 +8,7 @@ import Control.Lens                as X (view, (^.))
 import Control.Monad.IO.Class      as X (MonadIO(..))
 import Control.Monad.Reader        as X
 import Data.Coerce                 as X (coerce)
+import Data.Foldable               as X (for_)
 import Data.Generics.Product.Any   as X (the)
 import Data.Generics.Product.Typed as X (HasType)
 import Data.Hashable               as X (Hashable)

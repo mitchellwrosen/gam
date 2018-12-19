@@ -15,7 +15,7 @@ import qualified SDL
 data Window
   = Window
   { background :: RGBA
-  , picture :: Picture
+  , pictures :: [Picture]
   , scale :: (Float, Float)
   , size :: (Int, Int)
   , title :: Text
@@ -44,7 +44,7 @@ render ::
      )
   => Window
   -> m ()
-render (Window { background, picture, scale, size, title }) = do
+render (Window { background, pictures, scale, size, title }) = do
   window <- view (the @SDL.Window)
   renderer <- view (the @SDL.Renderer)
 
@@ -69,5 +69,5 @@ render (Window { background, picture, scale, size, title }) = do
     when (oldTitle /= title) (windowTitleVar $=! title)
 
   SDL.clear renderer
-  Picture.render picture
+  for_ pictures Picture.render
   SDL.present renderer
