@@ -20,9 +20,11 @@ data Texture
 data Opts
   = Opts
   { alpha :: Float
+  , clip :: Maybe (SDL.Rectangle CInt)
   , flipX :: Bool
   , flipY :: Bool
   , rotate :: Float
+  , scale :: (Float, Float)
   }
 
 width :: Texture -> CInt
@@ -61,24 +63,37 @@ fromSurface surface = do
 render ::
      (HasType SDL.Renderer r, MonadIO m, MonadReader r m)
   => Opts
-  -> Maybe (SDL.Rectangle CInt)
-  -> Maybe (SDL.Rectangle CInt)
+  -> SDL.Point SDL.V2 CInt
   -> Texture
   -> m ()
-render (Opts { alpha, flipX, flipY, rotate }) src dst (Texture texture _) = do
+render (Opts { alpha, clip, flipX, flipY, rotate, scale = (scaleX, scaleY) })
+    point (Texture texture (SDL.TextureInfo _ _ tw th)) = do
+
   do
     let alphaVar = SDL.textureAlphaMod texture
     let newAlpha = round (255 * alpha)
     oldAlpha <- SDL.get alphaVar
     when (oldAlpha /= newAlpha) (alphaVar $=! newAlpha)
 
-  renderer <- view (the @SDL.Renderer)
+  renderer <-
+    view (the @SDL.Renderer)
 
   SDL.copyEx
     renderer
     texture
-    src
-    dst
+    clip
+    (Just (SDL.Rectangle point (SDL.V2 dx dy)))
     (realToFrac rotate)
     Nothing
     (Linear.V2 flipX flipY)
+
+  where
+    sx, sy :: CInt
+    (sx, sy) =
+      case clip of
+        Nothing -> (tw, th)
+        Just (SDL.Rectangle _ (SDL.V2 w h)) -> (w, h)
+
+    dx, dy :: CInt
+    dx = if scaleX == 1 then sx else round (scaleX * fromIntegral sx)
+    dy = if scaleY == 1 then sy else round (scaleY * fromIntegral sy)

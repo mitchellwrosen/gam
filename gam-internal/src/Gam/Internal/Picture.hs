@@ -69,12 +69,12 @@ render =
         go alpha flipX flipY rotate (x * scaleX) (y * scaleY) translate pic
 
       Sprite sheet which ->
-        renderSprite (Texture.Opts alpha flipX flipY rotate) (scaleX, scaleY)
-          translate sheet which
+        renderSprite alpha flipX flipY rotate (scaleX, scaleY) translate sheet
+          which
 
       Textual style text ->
-        renderText (Texture.Opts alpha flipX flipY rotate) (scaleX, scaleY)
-          translate style text
+        renderText alpha flipX flipY rotate (scaleX, scaleY) translate style
+          text
 
       Translate v pic ->
         go alpha flipX flipY rotate scaleX scaleY (v + translate) pic
@@ -85,19 +85,22 @@ renderSprite ::
      , MonadIO m
      , MonadReader r m
      )
-  => Texture.Opts
+  => Float
+  -> Bool
+  -> Bool
+  -> Float
   -> (Float, Float)
   -> V
   -> SpriteSheet
   -> Int
   -> m ()
-renderSprite opts (scaleX, scaleY) translate sheet which = do
+renderSprite alpha flipX flipY rotate scale translate sheet which = do
   texture <-
     SpriteSheetCache.load (sheet ^. the @"file")
 
   let
-    srcRect :: SDL.Rectangle CInt
-    srcRect =
+    clip :: SDL.Rectangle CInt
+    clip =
       SDL.Rectangle
         (Linear.P (Linear.V2 (nx * sx) (ny * sy)))
         (Linear.V2 sx sy)
@@ -107,22 +110,20 @@ renderSprite opts (scaleX, scaleY) translate sheet which = do
           fromIntegral which `quotRem` (Texture.width texture `div` sx)
 
   Texture.render
-    opts
-    (Just srcRect)
-    (Just dstRect)
+    (Texture.Opts
+      { Texture.alpha = alpha
+      , Texture.clip = Just clip
+      , Texture.flipX = flipX
+      , Texture.flipY = flipY
+      , Texture.rotate = rotate
+      , Texture.scale = scale
+      })
+    (round <$> SDL.P (V.toV2 translate))
     texture
 
   where
     (fromIntegral -> sx, fromIntegral -> sy) =
       sheet ^. the @"spriteSize"
-
-    dstRect :: SDL.Rectangle CInt
-    dstRect =
-      SDL.Rectangle
-        (round <$> Linear.P (V.toV2 translate))
-        (Linear.V2
-          (round (scaleX * fromIntegral sx))
-          (round (scaleY * fromIntegral sy)))
 
 renderText ::
      ( HasType FontCache r
@@ -131,27 +132,27 @@ renderText ::
      , MonadIO m
      , MonadReader r m
      )
-  => Texture.Opts
+  => Float
+  -> Bool
+  -> Bool
+  -> Float
   -> (Float, Float)
   -> V
   -> TextStyle
   -> Text
   -> m ()
-renderText opts (scaleX, scaleY) translate style text = do
+renderText alpha flipX flipY rotate scale translate style text = do
   texture <-
     RenderedTextCache.load style text
 
-  let
-    dstRect :: SDL.Rectangle CInt
-    dstRect =
-      SDL.Rectangle
-        (round <$> Linear.P (V.toV2 translate))
-        (Linear.V2
-          (round (scaleX * fromIntegral (Texture.width texture)))
-          (round (scaleY * fromIntegral (Texture.height texture))))
-
   Texture.render
-    opts
-    Nothing
-    (Just dstRect)
+    (Texture.Opts
+      { Texture.alpha = alpha
+      , Texture.clip = Nothing
+      , Texture.flipX = flipX
+      , Texture.flipY = flipY
+      , Texture.rotate = rotate
+      , Texture.scale = scale
+      })
+    (round <$> Linear.P (V.toV2 translate))
     texture
