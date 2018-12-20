@@ -18,6 +18,7 @@ library
     Gam.P
     Gam.Picture
     Gam.RGBA
+    Gam.Sprite
     Gam.SpriteSheet
     Gam.V
     Gam.Window

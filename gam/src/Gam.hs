@@ -5,6 +5,7 @@ module Gam
   , P
   , pattern P
   , Picture
+  , Sprite(..)
   , SpriteSheet(..)
   , Window(..)
   , V
@@ -14,6 +15,7 @@ module Gam
 import Gam.P
 import Gam.Picture
 import Gam.RGBA
+import Gam.Sprite      (Sprite(..))
 import Gam.SpriteSheet (SpriteSheet(..))
 import Gam.V           (V, pattern V)
 import Gam.Window      (Window(..))

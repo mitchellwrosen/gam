@@ -36,6 +36,7 @@ library
     Haskell2010
   exposed-modules:
     Gam.Internal.FontCache
+    Gam.Internal.FrameCount
     Gam.Internal.Music
     Gam.Internal.P
     Gam.Internal.Picture
@@ -43,6 +44,7 @@ library
     Gam.Internal.Render
     Gam.Internal.RenderedTextCache
     Gam.Internal.RGBA
+    Gam.Internal.Sprite
     Gam.Internal.SpriteSheet
     Gam.Internal.SpriteSheetCache
     Gam.Internal.TextStyle

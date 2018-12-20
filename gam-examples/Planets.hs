@@ -1,7 +1,8 @@
 import Control.Category ((>>>))
 import Data.Function    ((&))
 import Gam              (InputMotion(..), MouseButton(..), P, pattern P,
-                         Picture, RGBA(..), SpriteSheet(..), V, Window(..))
+                         Picture, RGBA(..), Sprite(..), SpriteSheet(..), V,
+                         Window(..))
 import Gam.Main.Tea.Sub (Sub)
 
 import qualified Gam.Main.Tea
@@ -132,5 +133,14 @@ display model =
 
 renderPlanet :: Planet -> Picture
 renderPlanet (Planet { position }) =
-  Picture.sprite (SpriteSheet "gam-examples/planet.png" (16, 16)) 0
+  sprite
     & Picture.translate (P.asV (position - P 8 8))
+  where
+    sprite =
+      Picture.sprite Sprite
+        { sheet = SpriteSheet
+            { file = "gam-examples/planet.png"
+            , spriteSize = (16, 16)
+            }
+        , indices = [(0, 0)]
+        }

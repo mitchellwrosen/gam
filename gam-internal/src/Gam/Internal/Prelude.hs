@@ -13,6 +13,7 @@ import Data.Generics.Product.Any   as X (the)
 import Data.Generics.Product.Typed as X (HasType)
 import Data.Hashable               as X (Hashable)
 import Data.HashMap.Strict         as X (HashMap)
+import Data.Int                    as X
 import Data.IORef                  as X
 import Data.Maybe                  as X (catMaybes, fromMaybe)
 import Data.StateVar               as X (($=!))

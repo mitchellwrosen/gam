@@ -3,10 +3,11 @@ module Gam.Main.Tea
   , Sub
   ) where
 
-import Gam.Internal.Music   (Music)
+import Gam.Internal.FrameCount (FrameCount)
+import Gam.Internal.Music      (Music)
 import Gam.Internal.Prelude
-import Gam.Internal.Window  (Window)
-import Internal.Sub         (Sub(..))
+import Gam.Internal.Window     (Window)
+import Internal.Sub            (Sub(..))
 
 import qualified Gam.Internal.FontCache         as FontCache
 import qualified Gam.Internal.Music             as Music
@@ -56,17 +57,22 @@ main state subs update render = do
   spriteSheetCache <-
     SpriteSheetCache.new
 
+  frameCountRef <-
+    newIORef 0
+
   let
     doRender :: state -> IO ()
     doRender =
       render >>>
       Window.render >>>
       Render.run window renderer fontCache renderedTextCache spriteSheetCache
+        frameCountRef
 
   now <-
     getMonotonicTimeNSec
 
   mainLoop
+    frameCountRef
     subs
     update
     doRender
@@ -75,19 +81,22 @@ main state subs update render = do
 
 mainLoop
   :: forall msg state.
-     (state -> Sub msg)
+     IORef FrameCount
+  -> (state -> Sub msg)
   -> (msg -> state -> IO state)
   -> (state -> IO ())
   -> Word64
   -> state
   -> IO ()
-mainLoop subs update render =
+mainLoop frameCountRef subs update render =
   go NotPlayingMusic
 
   where
     go :: PlayingMusic -> Word64 -> state -> IO ()
     go oldPlayingMusic prevTime state0 = do
       time0 <- getMonotonicTimeNSec
+
+      modifyIORef' frameCountRef (+1)
 
       let
         currentSubs :: Sub msg

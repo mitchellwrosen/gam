@@ -1,6 +1,7 @@
 module Gam.Internal.Window where
 
 import Gam.Internal.FontCache         (FontCache)
+import Gam.Internal.FrameCount        (FrameCount)
 import Gam.Internal.Picture           (Picture)
 import Gam.Internal.Prelude
 import Gam.Internal.RenderedTextCache (RenderedTextCache)
@@ -37,6 +38,7 @@ new (Window { size, title }) =
 
 render ::
      ( HasType FontCache r
+     , HasType (IORef FrameCount) r
      , HasType RenderedTextCache r
      , HasType SDL.Renderer r
      , HasType SDL.Window r

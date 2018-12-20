@@ -1,6 +1,7 @@
 module Gam.Internal.Picture where
 
 import Gam.Internal.FontCache         (FontCache)
+import Gam.Internal.FrameCount        (FrameCount)
 import Gam.Internal.Prelude
 import Gam.Internal.RenderedTextCache (RenderedTextCache)
 import Gam.Internal.SpriteSheet       (SpriteSheet(..))
@@ -9,6 +10,8 @@ import Gam.Internal.TextStyle         (TextStyle(..))
 import Gam.Internal.V                 (V)
 
 import qualified Gam.Internal.RenderedTextCache as RenderedTextCache
+import qualified Gam.Internal.Sprite            as Sprite
+import qualified Gam.Internal.SpriteSheet       as SpriteSheet
 import qualified Gam.Internal.SpriteSheetCache  as SpriteSheetCache
 import qualified Gam.Internal.Texture           as Texture
 import qualified Gam.Internal.V                 as V
@@ -24,13 +27,14 @@ data Picture
   | FlipY Picture
   | Rotate Float Picture
   | Scale (Float, Float) Picture
-  | Sprite SpriteSheet Int
+  | Sprite Sprite.Sprite
   | Textual TextStyle Text
   | Translate V Picture
 
 render ::
      forall m r.
      ( HasType FontCache r
+     , HasType (IORef FrameCount) r
      , HasType RenderedTextCache r
      , HasType SDL.Renderer r
      , HasType SpriteSheetCache r
@@ -68,9 +72,8 @@ render =
       Scale (x, y) pic ->
         go alpha flipX flipY rotate (x * scaleX) (y * scaleY) translate pic
 
-      Sprite sheet which ->
-        renderSprite alpha flipX flipY rotate (scaleX, scaleY) translate sheet
-          which
+      Sprite sprite ->
+        renderSprite alpha flipX flipY rotate (scaleX, scaleY) translate sprite
 
       Textual style text ->
         renderText alpha flipX flipY rotate (scaleX, scaleY) translate style
@@ -82,6 +85,7 @@ render =
 renderSprite ::
      ( HasType SDL.Renderer r
      , HasType SpriteSheetCache r
+     , HasType (IORef FrameCount) r
      , MonadIO m
      , MonadReader r m
      )
@@ -91,28 +95,19 @@ renderSprite ::
   -> Float
   -> (Float, Float)
   -> V
-  -> SpriteSheet
-  -> Int
+  -> Sprite.Sprite
   -> m ()
-renderSprite alpha flipX flipY rotate scale translate sheet which = do
+renderSprite alpha flipX flipY rotate scale translate sprite = do
   texture <-
-    SpriteSheetCache.load (sheet ^. the @"file")
+    SpriteSheetCache.load (SpriteSheet.file (Sprite.sheet sprite))
 
-  let
-    clip :: SDL.Rectangle CInt
-    clip =
-      SDL.Rectangle
-        (Linear.P (Linear.V2 (nx * sx) (ny * sy)))
-        (Linear.V2 sx sy)
-
-      where
-        (ny, nx) =
-          fromIntegral which `quotRem` (Texture.width texture `div` sx)
+  frameCount <-
+    liftIO . readIORef =<< view (the @(IORef FrameCount))
 
   Texture.render
     (Texture.Opts
       { Texture.alpha = alpha
-      , Texture.clip = Just clip
+      , Texture.clip = Just (Sprite.rect frameCount sprite)
       , Texture.flipX = flipX
       , Texture.flipY = flipY
       , Texture.rotate = rotate
@@ -120,10 +115,6 @@ renderSprite alpha flipX flipY rotate scale translate sheet which = do
       })
     (round <$> SDL.P (V.toV2 translate))
     texture
-
-  where
-    (fromIntegral -> sx, fromIntegral -> sy) =
-      sheet ^. the @"spriteSize"
 
 renderText ::
      ( HasType FontCache r
