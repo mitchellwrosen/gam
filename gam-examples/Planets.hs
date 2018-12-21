@@ -23,7 +23,7 @@ main =
 
 data Model
   = Model
-  { placing :: Maybe P
+  { placing :: Maybe Planet
   , planets :: [Planet]
   } deriving stock (Show)
 
@@ -31,6 +31,7 @@ data Planet
   = Planet
   { position :: P
   , velocity :: V
+  , radius :: Float
   } deriving stock (Show)
 
 data Msg
@@ -58,21 +59,36 @@ update :: Msg -> Model -> Model
 update msg model =
   case msg of
     Tick dt ->
-      model { planets = stepPlanets dt (planets model) }
+      model
+        { planets = stepPlanets dt (planets model)
+        , placing =
+            (\planet ->
+              planet { radius = radius planet + 0.03 * dt }) <$> placing model
+        }
 
     Click ButtonLeft Pressed point ->
-      model { placing = Just point }
+      model
+        { placing =
+            Just Planet
+              { position = point
+              , velocity = 0
+              , radius = 8
+              }
+        }
 
     Click ButtonLeft Released point ->
       case placing model of
         Nothing ->
           model
 
-        Just origin ->
+        Just planet ->
           model
             { planets =
-                Planet origin (V.scale 0.001 (P.subtract origin point)) :
-                  planets model
+                planet
+                  { velocity =
+                      V.scale 0.001 (P.subtract (position planet) point)
+                  }
+                : planets model
             , placing =
                 Nothing
             }
@@ -125,16 +141,20 @@ display :: Model -> Window
 display model =
   Window
     { background = RGBA 0 0 0 0
-    , pictures = map renderPlanet (planets model)
+    , pictures =
+        maybe id ((:) . renderPlanet True) (placing model)
+          (map (renderPlanet False) (planets model))
     , scale = (1, 1)
     , size = (640, 480)
     , title = "Planets"
     }
 
-renderPlanet :: Planet -> Picture
-renderPlanet (Planet { position }) =
+renderPlanet :: Bool -> Planet -> Picture
+renderPlanet placing (Planet { position, radius }) =
   sprite
-    & Picture.translate (P.asV (position - P 8 8))
+    & Picture.translate (P.asV (position - P radius radius))
+    & (let n = radius / 8 in Picture.scale (n, n))
+    & if placing then Picture.alpha 0.5 else id
   where
     sprite =
       Picture.sprite Sprite

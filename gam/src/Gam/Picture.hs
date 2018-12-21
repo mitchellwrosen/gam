@@ -1,6 +1,7 @@
 module Gam.Picture
   ( Picture
   , sprite
+  , alpha
   , scale
   , translate
   ) where
@@ -16,6 +17,10 @@ import qualified Gam.Internal.Picture as Picture
 sprite :: Sprite -> Picture
 sprite =
   Picture.Sprite
+
+alpha :: Float -> Picture -> Picture
+alpha =
+  Picture.Alpha
 
 scale :: (Float, Float) -> Picture -> Picture
 scale =
