@@ -6,6 +6,7 @@ version: 0
 library
   build-depends:
       base
+    , containers
     , generic-lens
     , hashable
     , lens
@@ -15,14 +16,17 @@ library
     , sdl2-image
     , sdl2-ttf
     , StateVar
+    , strict-tuple >= 0.1.2
     , text
     , unordered-containers
+    , vector
   default-extensions:
     BangPatterns
     DataKinds
     DeriveAnyClass
     DeriveGeneric
     DerivingStrategies
+    DuplicateRecordFields
     FlexibleContexts
     GeneralizedNewtypeDeriving
     LambdaCase
@@ -30,17 +34,25 @@ library
     NoImplicitPrelude
     PatternSynonyms
     ScopedTypeVariables
+    StrictData
     TypeApplications
     ViewPatterns
   default-language:
     Haskell2010
   exposed-modules:
+    Gam.Internal.AABB
+    Gam.Internal.Circle
     Gam.Internal.FontCache
     Gam.Internal.FrameCount
+    Gam.Internal.Line
+    Gam.Internal.LineSegment
+    Gam.Internal.Idmap
+    Gam.Internal.M
     Gam.Internal.Music
     Gam.Internal.P
     Gam.Internal.Picture
     Gam.Internal.Prelude
+    Gam.Internal.Rectangle
     Gam.Internal.Render
     Gam.Internal.RenderedTextCache
     Gam.Internal.RGBA
@@ -49,6 +61,7 @@ library
     Gam.Internal.SpriteSheetCache
     Gam.Internal.TextStyle
     Gam.Internal.Texture
+    Gam.Internal.Transformation
     Gam.Internal.Typeface
     Gam.Internal.V
     Gam.Internal.Window
@@ -57,3 +70,5 @@ library
     -fno-warn-name-shadowing
   hs-source-dirs:
     src
+  other-modules:
+    Gam.Internal.V.Internal

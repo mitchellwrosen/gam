@@ -4,7 +4,6 @@ import Gam.Internal.FontCache         (FontCache)
 import Gam.Internal.FrameCount        (FrameCount)
 import Gam.Internal.Prelude
 import Gam.Internal.RenderedTextCache (RenderedTextCache)
-import Gam.Internal.SpriteSheet       (SpriteSheet(..))
 import Gam.Internal.SpriteSheetCache  (SpriteSheetCache)
 import Gam.Internal.TextStyle         (TextStyle(..))
 import Gam.Internal.V                 (V)
@@ -14,10 +13,7 @@ import qualified Gam.Internal.Sprite            as Sprite
 import qualified Gam.Internal.SpriteSheet       as SpriteSheet
 import qualified Gam.Internal.SpriteSheetCache  as SpriteSheetCache
 import qualified Gam.Internal.Texture           as Texture
-import qualified Gam.Internal.V                 as V
 
-import qualified Linear
-import qualified Linear.Affine as Linear
 import qualified SDL
 
 
@@ -30,6 +26,17 @@ data Picture
   | Sprite Sprite.Sprite
   | Textual TextStyle Text
   | Translate V Picture
+
+data RenderOpts
+  = RenderOpts
+  { alpha :: Float
+  , flipX :: Bool
+  , flipY :: Bool
+  , rotate :: Float
+  , scaleX :: Float
+  , scaleY :: Float
+  , translate :: V
+  } deriving stock (Generic)
 
 render ::
      forall m r.
@@ -44,43 +51,41 @@ render ::
   => Picture
   -> m ()
 render =
-  go 1 False False 0 1 1 0
+  go RenderOpts
+    { alpha = 1
+    , flipX = False
+    , flipY = False
+    , rotate = 0
+    , scaleX = 1
+    , scaleY = 1
+    , translate = 0
+    }
   where
-    go ::
-         Float
-      -> Bool
-      -> Bool
-      -> Float
-      -> Float
-      -> Float
-      -> V
-      -> Picture
-      -> m ()
-    go !alpha !flipX !flipY !rotate !scaleX !scaleY !translate = \case
+    go :: RenderOpts -> Picture -> m ()
+    go opts = \case
       Alpha f pic ->
-        go (alpha * f) flipX flipY rotate scaleX scaleY translate pic
+        go (opts & the @"alpha" %~ (* f)) pic
 
       FlipX pic ->
-        go alpha (not flipX) flipY rotate scaleX scaleY translate pic
+        go (opts & the @"flipX" %~ not) pic
 
       FlipY pic ->
-        go alpha flipX (not flipY) rotate scaleX scaleY translate pic
+        go (opts & the @"flipY" %~ not) pic
 
       Rotate n pic ->
-        go alpha flipX flipY (n + rotate) scaleX scaleY translate pic
+        go (opts & the @"rotate" %~ (+ n)) pic
 
       Scale (x, y) pic ->
-        go alpha flipX flipY rotate (x * scaleX) (y * scaleY) translate pic
+        go (opts & the @"scaleX" %~ (* x) & the @"scaleY" %~ (* y)) pic
 
       Sprite sprite ->
-        renderSprite alpha flipX flipY rotate (scaleX, scaleY) translate sprite
+        renderSprite opts sprite
 
       Textual style text ->
-        renderText alpha flipX flipY rotate (scaleX, scaleY) translate style
-          text
+        renderText opts style text
 
       Translate v pic ->
-        go alpha flipX flipY rotate scaleX scaleY (v + translate) pic
+        go (opts & the @"translate" %~ (+ v)) pic
 
 renderSprite ::
      ( HasType SDL.Renderer r
@@ -89,15 +94,13 @@ renderSprite ::
      , MonadIO m
      , MonadReader r m
      )
-  => Float
-  -> Bool
-  -> Bool
-  -> Float
-  -> (Float, Float)
-  -> V
+  => RenderOpts
   -> Sprite.Sprite
   -> m ()
-renderSprite alpha flipX flipY rotate scale translate sprite = do
+renderSprite
+    RenderOpts { alpha, flipX, flipY, rotate, scaleX, scaleY, translate }
+    sprite = do
+
   texture <-
     SpriteSheetCache.load (SpriteSheet.file (Sprite.sheet sprite))
 
@@ -111,9 +114,9 @@ renderSprite alpha flipX flipY rotate scale translate sprite = do
       , Texture.flipX = flipX
       , Texture.flipY = flipY
       , Texture.rotate = rotate
-      , Texture.scale = scale
+      , Texture.scale = (scaleX, scaleY)
       })
-    (round <$> SDL.P (V.toV2 translate))
+    translate
     texture
 
 renderText ::
@@ -123,16 +126,14 @@ renderText ::
      , MonadIO m
      , MonadReader r m
      )
-  => Float
-  -> Bool
-  -> Bool
-  -> Float
-  -> (Float, Float)
-  -> V
+  => RenderOpts
   -> TextStyle
   -> Text
   -> m ()
-renderText alpha flipX flipY rotate scale translate style text = do
+renderText
+    RenderOpts { alpha, flipX, flipY, rotate, scaleX, scaleY, translate } style
+    text = do
+
   texture <-
     RenderedTextCache.load style text
 
@@ -143,7 +144,7 @@ renderText alpha flipX flipY rotate scale translate style text = do
       , Texture.flipX = flipX
       , Texture.flipY = flipY
       , Texture.rotate = rotate
-      , Texture.scale = scale
+      , Texture.scale = (scaleX, scaleY)
       })
-    (round <$> Linear.P (V.toV2 translate))
+    translate
     texture

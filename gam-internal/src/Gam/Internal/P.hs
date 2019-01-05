@@ -1,41 +1,56 @@
 module Gam.Internal.P where
 
-import Gam.Internal.Prelude hiding (subtract)
-import Gam.Internal.V
+import Gam.Internal.M              (M(..))
+import Gam.Internal.Prelude        hiding (subtract)
+import Gam.Internal.Transformation (Transformation)
+import Gam.Internal.V              (V(..))
 
-import Linear.Affine ((.-.))
+import qualified Gam.Internal.Transformation as Transformation
+import qualified Gam.Internal.V              as V
 
-import qualified Linear
-import qualified Linear.Affine as Linear
+import Data.Vector.Unboxed ((!))
 
 
-newtype P
-  = P_ (Linear.Point Linear.V2 Float)
-  deriving stock (Show)
-  deriving newtype (Num)
-
-pattern P :: Float -> Float -> P
-pattern P x y =
-  P_ (Linear.P (Linear.V2 x y))
-{-# COMPLETE P #-}
-
+data P
+  = P
+  { x :: Float
+  , y :: Float
+  } deriving stock (Show)
 
 add :: V -> P -> P
 add (V vx vy) (P px py) =
   P (px + vx) (py + vy)
 
 asV :: P -> V
-asV (P_ (Linear.P p)) =
-  V_ p
+asV (P x y) =
+  V x y
 
 distance :: P -> P -> Float
 distance p q =
-  Linear.norm (toV2 (subtract p q))
+  V.magnitude (subtract p q)
+
+distanceSquared :: P -> P -> Float
+distanceSquared p q =
+  V.quadrance (subtract p q)
+
+max :: P -> P -> P
+max (P x1 y1) (P x2 y2) =
+  P (Gam.Internal.Prelude.max x1 x2) (Gam.Internal.Prelude.max y1 y2)
+
+min :: P -> P -> P
+min (P x1 y1) (P x2 y2) =
+  P (Gam.Internal.Prelude.min x1 x2) (Gam.Internal.Prelude.min y1 y2)
+
+minus :: P -> P -> V
+minus =
+  flip subtract
 
 subtract :: P -> P -> V
-subtract (P_ p) (P_ q) =
-  V_ (q .-. p)
+subtract (P x1 y1) (P x2 y2) =
+  V (x2 - x1) (y2 - y1)
 
-unwrap :: P -> Linear.Point Linear.V2 Float
-unwrap (P_ p) =
-  p
+transform :: Transformation -> P -> P
+transform t (P x y) =
+  P (x*(m!0) + y*(m!2) + (m!4)) (x*(m!1) + y*(m!3) + (m!5))
+  where
+    M m = Transformation.toM t

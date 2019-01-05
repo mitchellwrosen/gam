@@ -1,9 +1,20 @@
 module Gam.V
-  ( V
-  , pattern V
-  , scale
+  ( V(..)
+  , Semiplane(..)
+  , collinear
+  , flipY
+  , fromRadians
+  , lerp
+  , magnitude
   , maxQuadrance
+  , normalize
+  , perpendicular
   , quadrance
+  , rotate
+  , rotate90
+  , scale
+  , semiplane
+  , toRadians
   ) where
 
 import Gam.Internal.V

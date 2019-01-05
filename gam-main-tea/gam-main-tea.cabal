@@ -6,6 +6,7 @@ version: 0
 library
   build-depends:
       base
+    , gam
     , gam-internal
     , sdl2
     , sdl2-mixer

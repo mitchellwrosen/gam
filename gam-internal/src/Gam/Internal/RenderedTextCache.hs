@@ -10,6 +10,8 @@ import qualified Gam.Internal.RGBA      as RGBA
 import qualified Gam.Internal.Texture   as Texture
 import qualified Gam.Internal.Typeface  as Typeface
 
+import Data.Tuple.Strict
+
 import qualified Data.HashMap.Strict as HashMap
 import qualified SDL
 import qualified SDL.Font
@@ -17,7 +19,7 @@ import qualified SDL.Font
 
 -- TODO Rendered text cache expiry
 newtype RenderedTextCache
-  = RenderedTextCache (IORef (HashMap (TextStyle, Text) Texture))
+  = RenderedTextCache (IORef (HashMap (T2 TextStyle Text) Texture))
 
 new :: IO RenderedTextCache
 new =
@@ -80,7 +82,7 @@ lookup ::
   -> m (Maybe Texture)
 lookup style text = do
   RenderedTextCache cacheRef <- view (the @RenderedTextCache)
-  liftIO (HashMap.lookup (style, text) <$> readIORef cacheRef)
+  liftIO (HashMap.lookup (T2 style text) <$> readIORef cacheRef)
 
 put ::
      ( HasType RenderedTextCache r
@@ -93,4 +95,4 @@ put ::
   -> m ()
 put style text texture = do
   RenderedTextCache cacheRef <- view (the @RenderedTextCache)
-  liftIO (modifyIORef' cacheRef (HashMap.insert (style, text) texture))
+  liftIO (modifyIORef' cacheRef (HashMap.insert (T2 style text) texture))

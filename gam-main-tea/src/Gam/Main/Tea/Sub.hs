@@ -6,7 +6,7 @@ module Gam.Main.Tea.Sub
   ) where
 
 import Gam.Internal.Prelude
-import Gam.Internal.P (P(P_))
+import Gam.P                (P(..))
 import Internal.Sub
 
 import qualified SDL
@@ -22,8 +22,8 @@ millis f =
 mouseMotion :: forall msg. (P -> msg) -> Sub msg
 mouseMotion f =
   eventSub $ \case
-    SDL.MouseMotionEvent (SDL.MouseMotionEventData _ _ _ p _) ->
-      Just (f (P_ (fromIntegral <$> p)))
+    SDL.MouseMotionEvent (SDL.MouseMotionEventData _ _ _ (SDL.P (SDL.V2 x y)) _) ->
+      Just (f (P (fromIntegral x) (fromIntegral y)))
 
     _ ->
       Nothing
@@ -31,8 +31,8 @@ mouseMotion f =
 mouseClicks :: (SDL.MouseButton -> SDL.InputMotion -> P -> msg) -> Sub msg
 mouseClicks f =
   eventSub $ \case
-    SDL.MouseButtonEvent (SDL.MouseButtonEventData _ motion _ button _ p) ->
-      Just (f button motion (P_ (fromIntegral <$> p)))
+    SDL.MouseButtonEvent (SDL.MouseButtonEventData _ motion _ button _ (SDL.P (SDL.V2 x y))) ->
+      Just (f button motion (P (fromIntegral x) (fromIntegral y)))
 
     _ ->
       Nothing

@@ -9,17 +9,20 @@ library
     , gam-internal
     , sdl2
   default-extensions:
+    DuplicateRecordFields
     NoImplicitPrelude
     PatternSynonyms
   default-language:
     Haskell2010
   exposed-modules:
     Gam
+    Gam.Idmap
     Gam.P
     Gam.Picture
     Gam.RGBA
     Gam.Sprite
     Gam.SpriteSheet
+    Gam.Transformation
     Gam.V
     Gam.Window
   ghc-options:

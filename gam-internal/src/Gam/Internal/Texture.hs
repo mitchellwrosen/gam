@@ -2,6 +2,7 @@ module Gam.Internal.Texture where
 
 import Gam.Internal.Prelude
 import Gam.Internal.RGBA    (RGBA)
+import Gam.Internal.V       (V(..))
 
 import qualified Gam.Internal.RGBA as RGBA
 
@@ -63,11 +64,11 @@ fromSurface surface = do
 render ::
      (HasType SDL.Renderer r, MonadIO m, MonadReader r m)
   => Opts
-  -> SDL.Point SDL.V2 CInt
+  -> V
   -> Texture
   -> m ()
 render (Opts { alpha, clip, flipX, flipY, rotate, scale = (scaleX, scaleY) })
-    point (Texture texture (SDL.TextureInfo _ _ tw th)) = do
+    translate (Texture texture (SDL.TextureInfo _ _ tw th)) = do
 
   do
     let alphaVar = SDL.textureAlphaMod texture
@@ -91,9 +92,15 @@ render (Opts { alpha, clip, flipX, flipY, rotate, scale = (scaleX, scaleY) })
     sx, sy :: CInt
     (sx, sy) =
       case clip of
-        Nothing -> (tw, th)
+        Nothing                             -> (tw, th)
         Just (SDL.Rectangle _ (SDL.V2 w h)) -> (w, h)
 
     dx, dy :: CInt
     dx = if scaleX == 1 then sx else round (scaleX * fromIntegral sx)
     dy = if scaleY == 1 then sy else round (scaleY * fromIntegral sy)
+
+    point :: SDL.Point SDL.V2 CInt
+    point =
+      case translate of
+        V tx ty ->
+          SDL.P (SDL.V2 (round tx) (round ty))

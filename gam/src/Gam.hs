@@ -1,23 +1,23 @@
 module Gam
   ( SDL.InputMotion(..)
+  , Idmap
   , SDL.MouseButton(..)
   , RGBA(..)
-  , P
-  , pattern P
+  , P(..)
   , Picture
   , Sprite(..)
   , SpriteSheet(..)
   , Window(..)
-  , V
-  , pattern V
+  , V(..)
   ) where
 
-import Gam.P
-import Gam.Picture
+import Gam.Idmap       (Idmap)
+import Gam.P           (P(..))
+import Gam.Picture     (Picture)
 import Gam.RGBA
 import Gam.Sprite      (Sprite(..))
 import Gam.SpriteSheet (SpriteSheet(..))
-import Gam.V           (V, pattern V)
+import Gam.V           (V(..))
 import Gam.Window      (Window(..))
 
 import qualified SDL
