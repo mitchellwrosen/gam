@@ -2,11 +2,12 @@ module Gam.Internal.RenderedTextCache where
 
 import Gam.Internal.FontCache (FontCache)
 import Gam.Internal.Prelude
-import Gam.Internal.TextStyle (TextStyle(..))
+import Gam.Internal.TextStyle (TextStyle)
 import Gam.Internal.Texture   (Texture)
 
 import qualified Gam.Internal.FontCache as FontCache
 import qualified Gam.Internal.RGBA      as RGBA
+import qualified Gam.Internal.TextStyle as TextStyle
 import qualified Gam.Internal.Texture   as Texture
 import qualified Gam.Internal.Typeface  as Typeface
 
@@ -35,42 +36,59 @@ load ::
   => TextStyle
   -> Text
   -> m Texture
-load style@(TextStyle { aliased, color, font, kerning, outline, size, typeface })
-    text =
-  lookup style text >>= \case
-    Nothing -> do
-      font <-
-        FontCache.load font size
+load style text =
+  lookup style text >>=
+    maybe (loadNew style text) pure
 
-      do
-        oldKerning <- SDL.Font.getKerning font
-        when (oldKerning /= kerning) (SDL.Font.setKerning font kerning)
+loadNew ::
+     ( HasType FontCache r
+     , HasType RenderedTextCache r
+     , HasType SDL.Renderer r
+     , MonadIO m
+     , MonadReader r m
+     )
+  => TextStyle
+  -> Text
+  -> m Texture
+loadNew style text = do
+  font <-
+    FontCache.load (TextStyle.font style) (TextStyle.size style)
 
-      do
-        oldOutline <- SDL.Font.getOutline font
-        when (oldOutline /= outline) (SDL.Font.setOutline font outline)
+  setKerning font
+  setOutline font
+  setStyle font
 
-      do
-        let newStyles = Typeface.toStyles typeface
-        oldStyles <- SDL.Font.getStyle font
-        when (oldStyles /= newStyles) (SDL.Font.setStyle font newStyles)
+  texture <-
+    Texture.fromSurface =<<
+      render font
 
-      surface <-
-        if aliased
-          then SDL.Font.solid   font (RGBA.toV4 color) text
-          else SDL.Font.blended font (RGBA.toV4 color) text
+  put style text texture
 
-      texture <-
-        Texture.fromSurface surface
+  pure texture
 
-      SDL.freeSurface surface
+  where
+    setKerning font = do
+      oldKerning <- SDL.Font.getKerning font
+      let newKerning = TextStyle.kerning style
+      when (oldKerning /= newKerning) (SDL.Font.setKerning font newKerning)
 
-      put style text texture
+    setOutline font = do
+      oldOutline <- SDL.Font.getOutline font
+      let newOutline = TextStyle.outline style
+      when (oldOutline /= newOutline) (SDL.Font.setOutline font newOutline)
 
-      pure texture
+    setStyle font = do
+      oldStyles <- SDL.Font.getStyle font
+      let newStyles = Typeface.toStyles (TextStyle.typeface style)
+      when (oldStyles /= newStyles) (SDL.Font.setStyle font newStyles)
 
-    Just texture ->
-      pure texture
+    render font =
+      doRender font (RGBA.toV4 (TextStyle.color style)) text
+      where
+        doRender =
+          if TextStyle.aliased style
+            then SDL.Font.solid
+            else SDL.Font.blended
 
 lookup ::
      ( HasType RenderedTextCache r

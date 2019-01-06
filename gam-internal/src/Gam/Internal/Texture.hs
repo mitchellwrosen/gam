@@ -41,13 +41,10 @@ fromImageFile ::
      )
   => FilePath
   -> m Texture
-fromImageFile path = do
-  surface <- SDL.Image.load path
-  texture <- fromSurface surface
-  SDL.freeSurface surface
-  pure texture
+fromImageFile path =
+  SDL.Image.load path >>= fromSurface
 
--- | Create a 'Texture' from an SDL surface. Does not free the surface.
+-- | Create a 'Texture' from an SDL surface, and free the surface.
 fromSurface ::
      ( HasType SDL.Renderer r
      , MonadIO m
@@ -59,6 +56,8 @@ fromSurface surface = do
   texture <- do
     renderer <- view (the @SDL.Renderer)
     SDL.createTextureFromSurface renderer surface
+
+  SDL.freeSurface surface
 
   SDL.textureBlendMode texture $=!
     SDL.BlendAlphaBlend

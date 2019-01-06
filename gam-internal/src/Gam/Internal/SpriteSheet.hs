@@ -5,6 +5,6 @@ import Gam.Internal.Prelude
 
 data SpriteSheet
   = SpriteSheet
-  { file        :: Text
+  { file        :: Hashed FilePath
   , spriteSize  :: (Int, Int)
   } deriving stock (Generic)

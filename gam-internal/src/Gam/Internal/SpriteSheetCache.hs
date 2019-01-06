@@ -11,7 +11,7 @@ import qualified SDL
 
 
 newtype SpriteSheetCache
-  = SpriteSheetCache (IORef (HashMap Text Texture))
+  = SpriteSheetCache (IORef (HashMap (Hashed FilePath) Texture))
 
 new :: IO SpriteSheetCache
 new =
@@ -24,12 +24,12 @@ load ::
      , MonadIO m
      , MonadReader r m
      )
-  => Text
+  => Hashed FilePath
   -> m Texture
 load path =
   lookup path >>= \case
     Nothing -> do
-      texture <- Texture.fromImageFile (Text.unpack path)
+      texture <- Texture.fromImageFile (unhashed path)
       put path texture
       pure texture
 
@@ -37,16 +37,22 @@ load path =
       pure texture
 
 lookup ::
-     (HasType SpriteSheetCache r, MonadReader r m, MonadIO m)
-  => Text
+     ( HasType SpriteSheetCache r
+     , MonadIO m
+     , MonadReader r m
+     )
+  => Hashed FilePath
   -> m (Maybe Texture)
 lookup path = do
   SpriteSheetCache cacheRef <- view (the @SpriteSheetCache)
   liftIO (HashMap.lookup path <$> readIORef cacheRef)
 
 put ::
-     (HasType SpriteSheetCache r, MonadReader r m, MonadIO m)
-  => Text
+     ( HasType SpriteSheetCache r
+     , MonadIO m
+     , MonadReader r m
+     )
+  => Hashed FilePath
   -> Texture
   -> m ()
 put path texture = do
