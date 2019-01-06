@@ -1,8 +1,10 @@
 module Gam.Internal.Texture where
 
-import Gam.Internal.Prelude
 import Gam.Internal.P       (P(..))
+import Gam.Internal.Prelude
+import Gam.Internal.V       (V(..))
 
+import Foreign.Ptr      (Ptr, castPtr)
 import System.IO.Unsafe (unsafeInterleaveIO)
 
 import qualified SDL
@@ -33,6 +35,26 @@ height :: Texture -> CInt
 height (Texture _ (SDL.TextureInfo _ _ _ h)) =
   h
 
+forCairo ::
+     ( HasType SDL.Renderer r
+     , MonadIO m
+     , MonadReader r m
+     )
+  => V
+  -> m Texture
+forCairo (V (round -> width) (round -> height)) = do
+  renderer <-
+    view (the @SDL.Renderer)
+
+  texture <-
+    SDL.createTexture
+      renderer
+      SDL.ARGB8888
+      SDL.TextureAccessStreaming
+      (SDL.V2 width height)
+
+  fromTexture texture
+
 -- | Load a 'Texture' from an image 'FilePath'.
 fromImageFile ::
      ( HasType SDL.Renderer r
@@ -59,11 +81,29 @@ fromSurface surface = do
 
   SDL.freeSurface surface
 
+  fromTexture texture
+
+fromTexture :: MonadIO m => SDL.Texture -> m Texture
+fromTexture texture = do
   SDL.textureBlendMode texture $=!
     SDL.BlendAlphaBlend
 
   info <- liftIO (unsafeInterleaveIO (SDL.queryTexture texture))
+
   pure (Texture texture info)
+
+lock :: MonadIO m => Texture -> m (Ptr a, CInt)
+lock (Texture texture _) = do
+  (pixels, pitch) <- SDL.lockTexture texture Nothing
+  pure (castPtr pixels, pitch)
+
+unlock :: MonadIO m => Texture -> m ()
+unlock (Texture texture _) =
+  SDL.unlockTexture texture
+
+destroy :: MonadIO m => Texture -> m ()
+destroy (Texture texture _) =
+  SDL.destroyTexture texture
 
 render ::
      ( HasType SDL.Renderer r

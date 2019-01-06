@@ -21,6 +21,7 @@ library
     Gam.Form
     Gam.Idmap
     Gam.P
+    Gam.RGB
     Gam.RGBA
     Gam.Sprite
     Gam.SpriteSheet

@@ -6,6 +6,7 @@ version: 0
 library
   build-depends:
       base
+    , cairo
     , containers
     , generic-lens
     , hashable
