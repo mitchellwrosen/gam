@@ -16,9 +16,11 @@ library
     Haskell2010
   exposed-modules:
     Gam
+    Gam.Collage
+    Gam.Config
+    Gam.Form
     Gam.Idmap
     Gam.P
-    Gam.Picture
     Gam.RGBA
     Gam.Sprite
     Gam.SpriteSheet

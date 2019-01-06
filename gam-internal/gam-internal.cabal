@@ -42,7 +42,10 @@ library
   exposed-modules:
     Gam.Internal.AABB
     Gam.Internal.Circle
+    Gam.Internal.Collage
+    Gam.Internal.Config
     Gam.Internal.FontCache
+    Gam.Internal.Form
     Gam.Internal.FrameCount
     Gam.Internal.Line
     Gam.Internal.LineSegment
@@ -50,17 +53,18 @@ library
     Gam.Internal.M
     Gam.Internal.Music
     Gam.Internal.P
-    Gam.Internal.Picture
     Gam.Internal.Prelude
     Gam.Internal.Rectangle
     Gam.Internal.Render
     Gam.Internal.RenderedTextCache
+    Gam.Internal.RGB
     Gam.Internal.RGBA
     Gam.Internal.Sprite
     Gam.Internal.SpriteSheet
     Gam.Internal.SpriteSheetCache
-    Gam.Internal.TextStyle
+    Gam.Internal.Textual
     Gam.Internal.Texture
+    Gam.Internal.TextStyle
     Gam.Internal.Transformation
     Gam.Internal.Typeface
     Gam.Internal.V
@@ -71,4 +75,7 @@ library
   hs-source-dirs:
     src
   other-modules:
-    Gam.Internal.V.Internal
+    Internal.Collage
+    Internal.Form
+    Internal.Sprite
+    Internal.V

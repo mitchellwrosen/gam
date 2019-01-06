@@ -13,7 +13,7 @@ import Data.Function                as X ((&))
 import Data.Generics.Product.Any    as X (the)
 import Data.Generics.Product.Fields as X (HasField, field)
 import Data.Generics.Product.Typed  as X (HasType)
-import Data.Hashable                as X (Hashable)
+import Data.Hashable                as X (Hashable, Hashed, hashed, unhashed)
 import Data.HashMap.Strict          as X (HashMap)
 import Data.Int                     as X
 import Data.IntMap.Strict           as X (IntMap)

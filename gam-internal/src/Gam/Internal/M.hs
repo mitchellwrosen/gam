@@ -1,7 +1,7 @@
 module Gam.Internal.M where
 
 import Gam.Internal.Prelude
-import Gam.Internal.V.Internal (V(..))
+import Internal.V              (V(..))
 
 import Data.Vector.Unboxed (Vector, (!))
 

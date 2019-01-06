@@ -3,10 +3,12 @@ module Gam.Main.Tea
   , Sub
   ) where
 
+import Gam.Internal.Config     (Config)
 import Gam.Internal.FrameCount (FrameCount)
 import Gam.Internal.Music      (Music)
 import Gam.Internal.Prelude
 import Gam.Internal.Window     (Window)
+import Internal.Music
 import Internal.Sub            (Sub(..))
 
 import qualified Gam.Internal.FontCache         as FontCache
@@ -19,6 +21,7 @@ import qualified Gam.Internal.Window            as Window
 import Control.Concurrent (threadDelay)
 import GHC.Clock
 import System.Mem         (performGC)
+import Text.Printf        (printf)
 
 import qualified SDL
 import qualified SDL.Font
@@ -29,18 +32,19 @@ debug = False
 
 main ::
      forall msg state.
-     state
+     Config
+  -> state
   -> (state -> Sub msg)
   -> (msg -> state -> IO state)
   -> (state -> Window)
   -> IO ()
-main state subs update render = do
+main config state subs update render = do
   SDL.initializeAll
   SDL.Font.initialize
   SDL.Mixer.openAudio SDL.Mixer.defaultAudio 2048
 
   window <-
-    Window.new (render state)
+    Window.new config
 
   renderer <-
     SDL.createRenderer window (-1) SDL.RendererConfig
@@ -89,11 +93,11 @@ mainLoop
   -> state
   -> IO ()
 mainLoop frameCountRef subs update render =
-  go NotPlayingMusic
+  go NotPlaying
 
   where
-    go :: PlayingMusic -> Word64 -> state -> IO ()
-    go oldPlayingMusic prevTime state0 = do
+    go :: MusicState -> Word64 -> state -> IO ()
+    go oldMusicState prevTime state0 = do
       time0 <- getMonotonicTimeNSec
 
       modifyIORef' frameCountRef (+1)
@@ -105,7 +109,7 @@ mainLoop frameCountRef subs update render =
 
       -- Adjust the current music
       newPlayingMusic <-
-        adjustMusic oldPlayingMusic (music currentSubs)
+        adjustMusic oldMusicState (music currentSubs)
 
       -- Process SDL events since last frame
       state1 <-
@@ -117,104 +121,31 @@ mainLoop frameCountRef subs update render =
         stepGame (fps currentSubs) (time0 - prevTime) update state1
 
       -- Render the updated game state
-      debugTime "render" (render state2)
+      render state2 *-- "render"
 
       -- GC every frame
-      debugTime "gc" performGC
+      performGC *-- "gc"
 
       -- Sleep until the next frame
       time1 <- getMonotonicTimeNSec
-      threadDelay (fromIntegral (time0 + (nanosPerFrame `div` 1000) - time1))
+
+      let
+        elapsed :: Word64
+        elapsed =
+          time1 - time0
+
+      if elapsed <= nanosPerFrame
+        then
+          sleepNanos (nanosPerFrame - elapsed)
+
+        else do
+          let
+            (skipped, elapsed') =
+              elapsed `quotRem` nanosPerFrame
+          printf "[WARNING] Skipping %d frame(s)\n" skipped
+          sleepNanos (nanosPerFrame - elapsed')
+
       go newPlayingMusic time0 state2
-
--- Mini music state machine.
---
--- When we are fading out music, it doesn't matter what the current state says
--- what the music should be. We check every frame to see if the music has faded
--- out, then switch to the 'NotPlaying' music state.
-data PlayingMusic
-  = NotPlayingMusic
-  | FadingOutMusic SDL.Mixer.Music
-  | PlayingMusic Music SDL.Mixer.Music
-
-adjustMusic ::
-     PlayingMusic
-  -> Maybe Music
-  -> IO PlayingMusic
-adjustMusic oldPlayingMusic newMusicSettings =
-  case oldPlayingMusic of
-    NotPlayingMusic ->
-      case newMusicSettings of
-        Nothing ->
-          pure NotPlayingMusic
-
-        Just settings -> do
-          music <- play settings
-          pure (PlayingMusic settings music)
-
-    FadingOutMusic music ->
-      SDL.Mixer.playingMusic >>= \case
-        False -> do
-          SDL.Mixer.free music
-          pure NotPlayingMusic
-
-        True ->
-          pure (FadingOutMusic music)
-
-    PlayingMusic oldSettings oldMusic ->
-      case newMusicSettings of
-        Nothing -> do
-          case Music.fadeOut oldSettings of
-            0 -> do
-              SDL.Mixer.haltMusic
-              SDL.Mixer.free oldMusic
-              pure NotPlayingMusic
-
-            n ->
-              SDL.Mixer.fadeOutMusic n >>= \case
-                False -> do
-                  SDL.Mixer.free oldMusic
-                  pure NotPlayingMusic
-
-                True ->
-                  pure (FadingOutMusic oldMusic)
-
-
-        Just settings -> do
-          if Music.file oldSettings == Music.file settings
-            then do
-              when (Music.volume oldSettings /= Music.volume settings)
-                (SDL.Mixer.setMusicVolume (Music.volume settings))
-
-              pure (PlayingMusic settings oldMusic)
-
-            else do
-              case Music.fadeOut oldSettings of
-                0 -> do
-                  SDL.Mixer.haltMusic
-                  SDL.Mixer.free oldMusic
-                  music <- play settings
-                  pure (PlayingMusic settings music)
-
-                n -> do
-                  SDL.Mixer.fadeOutMusic n >>= \case
-                    False -> do
-                      SDL.Mixer.free oldMusic
-                      music <- play settings
-                      pure (PlayingMusic settings music)
-
-                    True ->
-                      pure (FadingOutMusic oldMusic)
-
-  where
-    play :: Music -> IO SDL.Mixer.Music
-    play settings = do
-      music <- SDL.Mixer.load (Music.file settings)
-      SDL.Mixer.setMusicVolume (Music.volume settings)
-      case Music.fadeIn settings of
-        0 -> SDL.Mixer.playMusic SDL.Mixer.Forever music
-        n -> SDL.Mixer.fadeInMusic n SDL.Mixer.Forever music
-      pure music
 
 processEvents ::
      forall msg state.
@@ -257,8 +188,8 @@ stepGame sub nanos update =
     Nothing -> pure
     Just f  -> update (f (fromIntegral nanos / 1000000))
 
-debugTime :: String -> IO a -> IO a
-debugTime str action =
+(*--) :: IO a -> String -> IO a
+(*--) action str =
   if debug
     then do
       t0 <- getMonotonicTimeNSec
@@ -276,3 +207,7 @@ nanosPerFrame =
     fps :: Float -> Word64
     fps n =
       round (1000000000 / n)
+
+sleepNanos :: Word64 -> IO ()
+sleepNanos nanos =
+  threadDelay (fromIntegral (nanos `div` 1000))

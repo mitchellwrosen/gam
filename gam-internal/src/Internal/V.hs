@@ -1,4 +1,4 @@
-module Gam.Internal.V.Internal where
+module Internal.V where
 
 import Gam.Internal.Prelude
 

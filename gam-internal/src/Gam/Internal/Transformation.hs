@@ -2,7 +2,7 @@ module Gam.Internal.Transformation where
 
 import Gam.Internal.M
 import Gam.Internal.Prelude
-import Gam.Internal.V.Internal (V(..))
+import Internal.V           (V(..))
 
 import qualified Gam.Internal.M as M
 

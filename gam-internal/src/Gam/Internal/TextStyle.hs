@@ -4,6 +4,7 @@ import Gam.Internal.Prelude
 import Gam.Internal.RGBA     (RGBA)
 import Gam.Internal.Typeface (Typeface)
 
+
 data TextStyle
   = TextStyle
   { aliased :: Bool
@@ -15,3 +16,4 @@ data TextStyle
   , typeface :: Typeface
   } deriving stock (Eq, Generic)
     deriving anyclass (Hashable)
+

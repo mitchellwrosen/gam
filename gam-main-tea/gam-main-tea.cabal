@@ -26,4 +26,5 @@ library
   hs-source-dirs:
     src
   other-modules:
+    Internal.Music
     Internal.Sub

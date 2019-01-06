@@ -6,7 +6,6 @@ import qualified Data.HashMap.Strict as HashMap
 import qualified SDL.Font            as SDL (Font)
 import qualified SDL.Font            as SDL.Font
 
-import Data.Hashable     (Hashed, hashed)
 import Data.Tuple.Strict
 
 

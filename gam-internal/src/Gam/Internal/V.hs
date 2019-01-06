@@ -1,12 +1,12 @@
 module Gam.Internal.V
   ( module Gam.Internal.V
-  , module Gam.Internal.V.Internal
+  , module Internal.V
   ) where
 
 import Gam.Internal.M              (M(..))
 import Gam.Internal.Prelude
 import Gam.Internal.Transformation (Transformation(..))
-import Gam.Internal.V.Internal
+import Internal.V
 
 import qualified Gam.Internal.M as M
 
